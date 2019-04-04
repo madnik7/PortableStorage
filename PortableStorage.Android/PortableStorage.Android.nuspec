@@ -1,14 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
   <metadata>
-    <id>PortableStorage</id>
-    <version>1.0.3</version>
+    <id>PortableStorage.Android</id>
+    <version>1.0.6</version>
     <authors>Mohammad Nikravan</authors>
     <owners>Mohammad Nikravan</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>A Portable Storage Provider for Android Storage Access Framework (SAF)</description>
     <tags>IsolatedStorage PortableStorage Storage Android SAF Storage-Access-Framework Xamarin</tags>
     <repository url="https://github.com/madnik7/PortableStorage" />
+    <license type="expression">MIT</license>
     <dependencies>
     </dependencies>
   </metadata>
