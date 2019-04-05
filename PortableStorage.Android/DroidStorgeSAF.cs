@@ -19,9 +19,14 @@ namespace PortableStorage.Droid
         public bool IsGetEntryUriByNameFast => false;
         private string _name;
 
-        public static Storage CreateLiStorage(Context context, Uri uri)
+        public static Storage CreateStorage(Context context, Uri uri)
         {
-            var provider = new DroidStorgeSAF(context, AndroidUriFromUri(uri));
+            return CreateStorage(context, AndroidUriFromUri(uri));
+        }
+
+        public static Storage CreateStorage(Context context, Android.Net.Uri androidUri)
+        {
+            var provider = new DroidStorgeSAF(context, androidUri);
             return new Storage(provider);
         }
 
@@ -289,7 +294,7 @@ namespace PortableStorage.Droid
                             Uri = AndroidUriToUri(DocumentsContract.BuildDocumentUriUsingTree(AndroidUri, documentId)),
                             IsStorage = cursor.GetString(2) == DocumentsContract.Document.MimeTypeDir,
                             Size = long.Parse(cursor.GetString(3)),
-                            LastWriteTime = JavaTimeStampToDateTime(double.Parse(cursor.GetString(4))),
+                            LastWriteTime = cursor.GetString(4) != null ? JavaTimeStampToDateTime(double.Parse(cursor.GetString(4))) : DateTime.Now,
                             Attributes = attribute,
                         });
 

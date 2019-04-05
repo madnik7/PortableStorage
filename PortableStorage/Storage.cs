@@ -164,7 +164,7 @@ namespace PortableStorage
             {
                 if (storageCache.cacheTime.AddSeconds(_cacheTimeout) > DateTime.Now)
                     return storageCache.storage;
-                _storageCache.TryRemove(name, out storageCache);
+                _storageCache.TryRemove(name, out _);
             }
 
             // open storage and add it to cache
@@ -183,8 +183,17 @@ namespace PortableStorage
             }
         }
 
-        public Storage CreateStorage(string name)
+        public Storage CreateStorage(string name, bool openIfAlreadyExists = true)
         {
+            // Check existance, some provider may duplicate the entry with same name
+            if (EntryExists(name))
+            {
+                if (openIfAlreadyExists)
+                    return OpenStorage(name);
+                else
+                    throw new IOException("Entry already exists!");
+            }
+
             var result = _provider.CreateStorage(name);
             var entry = ProviderEntryToEntry(result.Entry);
             var storage = new Storage(result.Storage, this);
@@ -199,7 +208,7 @@ namespace PortableStorage
             _provider.RemoveStream(uri);
 
             //update cache
-            _entryCache.TryRemove(name, out StorageEntry value);
+            _entryCache.TryRemove(name, out _);
         }
 
         public void RemoveStorage(string name)
@@ -208,8 +217,8 @@ namespace PortableStorage
             _provider.RemoveStorage(uri);
 
             //update cache
-            _storageCache.TryRemove(name, out StorageCache storageCache);
-            _entryCache.TryRemove(name, out StorageEntry storageEntry);
+            _storageCache.TryRemove(name, out _);
+            _entryCache.TryRemove(name, out _);
         }
 
         public void Rename(string name, string desName)
@@ -231,6 +240,18 @@ namespace PortableStorage
                     entry.Uri = newUri;
                     _entryCache.TryAdd(desName, entry);
                 }
+            }
+        }
+
+        public bool EntryExists(string name)
+        {
+            try
+            {
+                return GetEntry(name) != null;
+            }
+            catch (StorageNotFoundException)
+            {
+                return false;
             }
         }
 
@@ -344,12 +365,12 @@ namespace PortableStorage
 
         public Stream CreateStream(string name, StreamShare share, bool overwriteExisting = false, int bufferSize = 0)
         {
+            if (EntryExists(name) && !overwriteExisting)
+                throw new IOException("Entry already exists!");
+
             //try to delete the old one
             if (overwriteExisting)
-            {
-                try { RemoveStream(name); }
-                catch (StorageNotFoundException) { }
-            }
+                RemoveStream(name);
 
             //create new stream
             var result = _provider.CreateStream(name, StreamAccess.ReadWrite, share, bufferSize);
@@ -366,6 +387,9 @@ namespace PortableStorage
             }
             catch (StorageNotFoundException)
             {
+                if (!createIfNotExists)
+                    throw;
+
                 return CreateStorage(name);
             }
         }

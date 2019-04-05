@@ -10,7 +10,7 @@
     <TemplateGuid>{9ef11e43-1701-4396-8835-8392d57abb70}</TemplateGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>PortableStorage.Android</RootNamespace>
+    <RootNamespace>PortableStorage.Droid</RootNamespace>
     <AssemblyName>PortableStorage.Android</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <AndroidResgenFile>Resources\Resource.designer.cs</AndroidResgenFile>
@@ -54,6 +54,7 @@
   <ItemGroup>
     <None Include="PortableStorage.Android.nuspec" />
     <Compile Include="DroidChannelStream.cs" />
+    <Compile Include="DroidStorageHelper.cs" />
     <Compile Include="DroidStorgeSAF.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
