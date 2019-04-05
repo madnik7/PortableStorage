@@ -17,4 +17,27 @@ A Portable Storage for .NET
 
 
 ### For Android Storage Access Framework (SAF)
-Comming Soon
+Check Android Sample in the repository!
+
+First get access to storage Uri
+```c#
+// Select a folder by Intent 
+private void BrowseOnClick(object sender, EventArgs eventArgs)
+{
+     DroidStorageHelper.BrowserFolder(this, browseRequestCode);
+}
+
+// Access the folder via DroidStorgeSAF
+protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent data)
+{
+     base.OnActivityResult(requestCode, resultCode, data);
+     var uri = DroidStorageHelper.ResolveFromActivityResult(this, requestCode, resultCode, data, browseRequestCode);
+     if (uri != null)
+     {
+        var storage = DroidStorgeSAF.CreateStorage(this, uri);
+        storage.CreateStorage("_PortableStorage.Test");
+        storage.WriteAllText(filename, sampleText);
+        var res = storage.ReadAllText(filename);
+     }
+}
+```
