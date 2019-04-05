@@ -19,7 +19,9 @@ A Portable Storage for .NET
 ### For Android Storage Access Framework (SAF)
 Check Android Sample in the repository!
 
-First get access to storage Uri
+1) First get access to storage Uri by calling DroidStorageHelper.BrowserFolder.
+2) Obtain storage object by using the given uri. the uri can also be saved for later usage.
+
 ```c#
 // Select a folder by Intent 
 private void BrowseOnClick(object sender, EventArgs eventArgs)
