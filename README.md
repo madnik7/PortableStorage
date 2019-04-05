@@ -30,14 +30,13 @@ private void BrowseOnClick(object sender, EventArgs eventArgs)
 // Access the folder via DroidStorgeSAF
 protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent data)
 {
-     base.OnActivityResult(requestCode, resultCode, data);
-     var uri = DroidStorageHelper.ResolveFromActivityResult(this, requestCode, resultCode, data, browseRequestCode);
-     if (uri != null)
-     {
+    base.OnActivityResult(requestCode, resultCode, data);
+    var uri = DroidStorageHelper.ResolveFromActivityResult(this, requestCode, resultCode, data, browseRequestCode);
+    if (uri != null)
+    {
         var storage = DroidStorgeSAF.CreateStorage(this, uri);
         storage.CreateStorage("_PortableStorage.Test");
-        storage.WriteAllText(filename, sampleText);
-        var res = storage.ReadAllText(filename);
-     }
+        storage.WriteAllText("test.txt", "123");
+    }
 }
 ```
