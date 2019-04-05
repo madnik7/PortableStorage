@@ -4,12 +4,13 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <Authors>Mohammad Nikravan</Authors>
     <PackageTags>IsolatedStorage PortableStorage Storage</PackageTags>
-    <Version>1.0.7</Version>
-    <PackageProjectUrl></PackageProjectUrl>
+    <Version>1.0.9</Version>
+    <PackageProjectUrl>https://github.com/madnik7/PortableStorage</PackageProjectUrl>
     <RepositoryUrl>https://github.com/madnik7/PortableStorage</RepositoryUrl>
     <PackageLicenseUrl></PackageLicenseUrl>
     <Description>A Portable Storage for .NET</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
 </Project>
