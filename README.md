@@ -16,13 +16,14 @@ A Portable Storage for .NET
 nuget Install-Package PortableStorage
 
 ### For File System 
+A provider for .NET Standard File.
 ```c#
   var storage = FileStorgeProvider.CreateStorage("c:/storage");
   storage.WriteAllText("fileName.txt", "1234");
 ```
 
-
 ### For Android Storage Access Framework (SAF)
+A provider for Android SAF, easy access to Android external memory, USB OTG and sdcard.
 Check Android Sample in the repository!
 
 1) First get access to storage Uri by calling DroidStorageHelper.BrowserFolder.
