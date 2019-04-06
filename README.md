@@ -26,24 +26,24 @@ A provider for .NET Standard File.
 A provider for Android SAF, easy access to Android external memory, USB OTG and sdcard.
 Check Android Sample in the repository!
 
-1) First get access to storage Uri by calling DroidStorageHelper.BrowserFolder.
+1) First get access to storage Uri by calling SafStorageHelper.BrowserFolder.
 2) Obtain storage object by using the given uri. the uri can also be saved for later usage.
 
 ```c#
 // Select a folder by Intent 
 private void BrowseOnClick(object sender, EventArgs eventArgs)
 {
-     DroidStorageHelper.BrowserFolder(this, browseRequestCode);
+     SafStorageHelper.BrowserFolder(this, browseRequestCode);
 }
 
-// Access the folder via DroidStorgeSAF
+// Access the folder via SafStorgeProvider
 protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent data)
 {
     base.OnActivityResult(requestCode, resultCode, data);
-    var uri = DroidStorageHelper.ResolveFromActivityResult(this, requestCode, resultCode, data, browseRequestCode);
+    var uri = SafStorageHelper.ResolveFromActivityResult(this, requestCode, resultCode, data, browseRequestCode);
     if (uri != null)
     {
-        var storage = DroidStorgeSAF.CreateStorage(this, uri);
+        var storage = SafStorgeProvider.CreateStorage(this, uri);
         storage.CreateStorage("_PortableStorage.Test");
         storage.WriteAllText("test.txt", "123");
     }
