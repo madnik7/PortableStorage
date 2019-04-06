@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 
 namespace PortableStorage.Droid
 {
-    public class DroidStorgeSAF : IStorageProvider
+    public class SafStorgeProvider : IStorageProvider
     {
         public Context Context { get; }
         public Android.Net.Uri AndroidUri { get; }
@@ -26,21 +26,21 @@ namespace PortableStorage.Droid
 
         public static Storage CreateStorage(Context context, Android.Net.Uri androidUri)
         {
-            var provider = new DroidStorgeSAF(context, androidUri);
+            var provider = new SafStorgeProvider(context, androidUri);
             return new Storage(provider);
         }
 
-        public DroidStorgeSAF(Context context, Uri uri)
+        public SafStorgeProvider(Context context, Uri uri)
             : this(context, AndroidUriFromUri(uri))
         {
         }
 
-        public DroidStorgeSAF(Context context, Android.Net.Uri androidUri)
+        public SafStorgeProvider(Context context, Android.Net.Uri androidUri)
             : this(context, androidUri, null)
         {
         }
 
-        private DroidStorgeSAF(Context context, Android.Net.Uri androidUri, string name)
+        private SafStorgeProvider(Context context, Android.Net.Uri androidUri, string name)
         {
             AndroidUri = androidUri;
             Context = context;
@@ -55,7 +55,7 @@ namespace PortableStorage.Droid
 
             var ret = new CreateStorageResult()
             {
-                Storage = new DroidStorgeSAF(Context, docUri, name),
+                Storage = new SafStorgeProvider(Context, docUri, name),
                 Entry = new StorageEntryBase
                 {
                     Name = name,
@@ -96,7 +96,7 @@ namespace PortableStorage.Droid
 
         private IStorageProvider OpenStorage(Android.Net.Uri docUri)
         {
-            return new DroidStorgeSAF(Context, docUri);
+            return new SafStorgeProvider(Context, docUri);
         }
 
         public string Name
@@ -168,7 +168,7 @@ namespace PortableStorage.Droid
 
         public void RemoveStorage(Android.Net.Uri docUri)
         {
-            var storage = (DroidStorgeSAF)OpenStorage(docUri);
+            var storage = (SafStorgeProvider)OpenStorage(docUri);
             storage.EraseStorage(); //some OTG flags does not release free space so clear its contents manually
             if (!DocumentsContract.DeleteDocument(Context.ContentResolver, docUri))
                 throw new Exception($"Could not delete storage. Uri: {docUri}");
@@ -179,7 +179,7 @@ namespace PortableStorage.Droid
             var entries = GetEntries();
 
             //erase substorage
-            var storageEntries = entries.Where(x => x.IsStorage).Select(x => new DroidStorgeSAF(Context, Android.Net.Uri.Parse(x.Uri.ToString())));
+            var storageEntries = entries.Where(x => x.IsStorage).Select(x => new SafStorgeProvider(Context, Android.Net.Uri.Parse(x.Uri.ToString())));
             foreach (var item in storageEntries)
                 item.EraseStorage();
 
@@ -233,7 +233,7 @@ namespace PortableStorage.Droid
 
 
             var parcelFD = resolver.OpenFileDescriptor(androidUri, streamMode);
-            var stream = new DroidChannelStream(parcelFD, streamMode);
+            var stream = new ChannelStream(parcelFD, streamMode);
             var ret = (Stream)new PortableStorage.BufferedStream(stream, bufferSize);
             return ret;
         }

@@ -1,19 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 using Android.App;
 using Android.Content;
-using Android.OS;
 using Android.Provider;
-using Android.Runtime;
-using Android.Views;
-using Android.Widget;
 
 namespace PortableStorage.Droid
 {
-    public static class DroidStorageHelper
+    public static class SafStorageHelper
     {
         public static void BrowserFolder(Activity activity, int requestCode)
         {

@@ -90,7 +90,7 @@ namespace AndroidSample
 
         private void BrowseOnClick(object sender, EventArgs eventArgs)
         {
-            DroidStorageHelper.BrowserFolder(this, browseRequestCode);
+            SafStorageHelper.BrowserFolder(this, browseRequestCode);
         }
 
         private void ReadWriteClick(object sender, EventArgs eventArgs)
@@ -103,7 +103,7 @@ namespace AndroidSample
 
                 var filename = "test.txt";
                 var sampleText = "Sample Text";
-                var storage = DroidStorgeSAF.CreateStorage(this, StorageUri);
+                var storage = SafStorgeProvider.CreateStorage(this, StorageUri);
                 storage.CreateStorage("_PortableStorage.Test");
                 storage.WriteAllText(filename, sampleText);
                 var res = storage.ReadAllText(filename);
@@ -125,7 +125,7 @@ namespace AndroidSample
 
             try
             {
-                var uri = DroidStorageHelper.ResolveFromActivityResult(this, requestCode, resultCode, data, browseRequestCode);
+                var uri = SafStorageHelper.ResolveFromActivityResult(this, requestCode, resultCode, data, browseRequestCode);
                 if (uri != null)
                     StorageUri = uri;
             }

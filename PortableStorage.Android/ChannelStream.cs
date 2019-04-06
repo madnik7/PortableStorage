@@ -5,12 +5,12 @@ using System.IO;
 
 namespace PortableStorage.Droid
 {
-    public class DroidChannelStream : Stream
+    internal class ChannelStream : Stream
     {
         private Java.Nio.Channels.FileChannel Channel { get; set; }
         private readonly string _mode;
         private readonly IDisposable _stream;
-        public DroidChannelStream(ParcelFileDescriptor parcelFileDescriptor, string mode)
+        public ChannelStream(ParcelFileDescriptor parcelFileDescriptor, string mode)
         {
             _mode = mode;
             ParcelFileDescriptor = parcelFileDescriptor;

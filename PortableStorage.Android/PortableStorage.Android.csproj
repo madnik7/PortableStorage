@@ -53,9 +53,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="PortableStorage.Android.nuspec" />
-    <Compile Include="DroidChannelStream.cs" />
-    <Compile Include="DroidStorageHelper.cs" />
-    <Compile Include="DroidStorgeSAF.cs" />
+    <Compile Include="ChannelStream.cs" />
+    <Compile Include="SafStorageHelper.cs" />
+    <Compile Include="SafStorgeProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
