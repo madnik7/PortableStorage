@@ -8,8 +8,8 @@ A Portable Storage for .NET
 * Android Storage Access Framework (SAF) File Provider
 
 ## nuget
-https://www.nuget.org/packages/PortableStorage/
-https://www.nuget.org/packages/PortableStorage.Android/
+* https://www.nuget.org/packages/PortableStorage/
+* https://www.nuget.org/packages/PortableStorage.Android/
 
 ## Usage
 
