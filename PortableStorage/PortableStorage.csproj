@@ -1,10 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Authors>Mohammad Nikravan</Authors>
     <PackageTags>IsolatedStorage PortableStorage Storage</PackageTags>
-    <Version>1.0.9</Version>
+    <Version>1.0.10</Version>
     <PackageProjectUrl>https://github.com/madnik7/PortableStorage</PackageProjectUrl>
     <RepositoryUrl>https://github.com/madnik7/PortableStorage</RepositoryUrl>
     <PackageLicenseUrl></PackageLicenseUrl>
