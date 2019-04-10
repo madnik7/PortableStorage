@@ -18,7 +18,7 @@ namespace PortableStorage
             public Storage storage;
         }
 
-        public readonly char SeparatorChar = '/';
+        public static readonly char SeparatorChar = '/';
 
         private readonly IStorageProvider _provider;
         private readonly int _cacheTimeoutFiled;
@@ -452,9 +452,9 @@ namespace PortableStorage
         }
 
 
-        public string PathCombine(string path1, string path2)
+        public static string PathCombine(string path1, string path2)
         {
-            return System.IO.Path.Combine(path1, path2).Replace("\\", "/");
+            return System.IO.Path.Combine(path1, path2).Replace('\\', SeparatorChar);
         }
 
         public long GetSize()
