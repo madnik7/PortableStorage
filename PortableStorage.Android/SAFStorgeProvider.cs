@@ -19,15 +19,15 @@ namespace PortableStorage.Droid
         public bool IsGetEntryUriByNameFast => false;
         private string _name;
 
-        public static Storage CreateStorage(Context context, Uri uri)
+        public static Storage CreateStorage(Context context, Uri uri, int cacheTimeout = -1)
         {
-            return CreateStorage(context, AndroidUriFromUri(uri));
+            return CreateStorage(context, AndroidUriFromUri(uri), cacheTimeout);
         }
 
-        public static Storage CreateStorage(Context context, Android.Net.Uri androidUri)
+        public static Storage CreateStorage(Context context, Android.Net.Uri androidUri, int cacheTimeout = -1)
         {
             var provider = new SafStorgeProvider(context, androidUri);
-            return new Storage(provider);
+            return new Storage(provider, cacheTimeout);
         }
 
         public SafStorgeProvider(Context context, Uri uri)

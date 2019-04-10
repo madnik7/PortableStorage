@@ -12,9 +12,10 @@ namespace PortableStorage.Providers
         public bool IsGetEntriesBySearchPatternFast => true;
         public bool IsGetEntryUriByNameFast => true;
 
-        public static Storage CreateStorage(string path, bool createIfNotExists)
+        public static Storage CreateStorage(string path, bool createIfNotExists, int cacheTimeout = -1)
         {
-            var ret = new Storage(new FileStorgeProvider(path, createIfNotExists));
+            var provider = new FileStorgeProvider(path, createIfNotExists);
+            var ret = new Storage(provider, cacheTimeout);
             return ret;
         }
 

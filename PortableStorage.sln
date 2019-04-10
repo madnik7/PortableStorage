@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AndroidSample", "Samples\An
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{D1ADEEE0-6EF7-4D35-9620-1B8E99412025}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PortableStorage.Test", "PortableStorage.Test\PortableStorage.Test.csproj", "{E3134225-91F5-499D-86CB-16FA311C9C8C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +33,10 @@ Global
 		{0B7910FF-1E1E-4A94-BFB9-A3D9039B9E14}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0B7910FF-1E1E-4A94-BFB9-A3D9039B9E14}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0B7910FF-1E1E-4A94-BFB9-A3D9039B9E14}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{E3134225-91F5-499D-86CB-16FA311C9C8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3134225-91F5-499D-86CB-16FA311C9C8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3134225-91F5-499D-86CB-16FA311C9C8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3134225-91F5-499D-86CB-16FA311C9C8C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

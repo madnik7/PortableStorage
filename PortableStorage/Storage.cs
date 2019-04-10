@@ -29,10 +29,11 @@ namespace PortableStorage
         private readonly object _lockObject = new object();
         private string _name;
 
-        public Storage(IStorageProvider provider, int cacheTimeout = 1000)
+
+        public Storage(IStorageProvider provider, int cacheTimeout = -1)
         {
             _provider = provider ?? throw new ArgumentNullException("provider");
-            _cacheTimeoutFiled = cacheTimeout;
+            _cacheTimeoutFiled = cacheTimeout==-1 ? 1000 : cacheTimeout;
         }
 
         private Storage(IStorageProvider provider, Storage parent)
@@ -336,26 +337,22 @@ namespace PortableStorage
             return OpenStream(name, StreamMode.Open, StreamAccess.Read, StreamShare.Read, bufferSize);
         }
 
-        public Stream OpenStreamWrite(string name, int bufferSize = 0)
+        public Stream OpenStreamWrite(string name)
         {
-            return OpenStreamWrite(name, StreamShare.None, bufferSize);
+            return OpenStreamWrite(name, StreamShare.None);
         }
 
-        public Stream OpenStreamWrite(string name, StreamShare share, int bufferSize = 0)
-        {
-            return OpenStream(name, StreamMode.Open, StreamAccess.Write, share, bufferSize);
-        }
-
-        public Stream OpenOrCreateStreamWrite(string name, StreamShare share = StreamShare.None, int bufferSize = 0)
+        public Stream OpenStreamWrite(string name, StreamShare share)
         {
             try
             {
-                return OpenStreamWrite(name, share, bufferSize);
+                return OpenStream(name, StreamMode.Open, StreamAccess.Write, share);
             }
             catch (StorageNotFoundException)
             {
-                return CreateStream(name, share, false, bufferSize);
+                return CreateStream(name, share);
             }
+
         }
 
         public Stream CreateStream(string name, bool overwriteExisting = false, int bufferSize = 0)
@@ -406,6 +403,13 @@ namespace PortableStorage
             return ret;
         }
 
+        public Stream OpenStreamWriteByPath(string path, StreamShare share = StreamShare.None)
+        {
+            var storagePath = System.IO.Path.GetDirectoryName(path);
+            var storage = string.IsNullOrEmpty(storagePath) ? this: OpenStorageByPath(storagePath, true);
+            return storage.OpenStreamWrite(System.IO.Path.GetFileName(path), share);
+        }
+
         public string ReadAllText(string name)
         {
             using (var stream = OpenStreamRead(name))
@@ -426,14 +430,14 @@ namespace PortableStorage
 
         public void WriteAllText(string name, string text, Encoding encoding)
         {
-            using (var stream = OpenOrCreateStreamWrite(name))
+            using (var stream = OpenStreamWrite(name))
             using (var sr = new StreamWriter(stream, encoding))
                 sr.Write(text);
         }
 
         public void WriteAllText(string name, string text)
         {
-            using (var stream = OpenOrCreateStreamWrite(name))
+            using (var stream = OpenStreamWrite(name))
             using (var sr = new StreamWriter(stream))
                 sr.Write(text);
         }
@@ -447,7 +451,7 @@ namespace PortableStorage
 
         public void WriteAllBytes(string name, byte[] bytes)
         {
-            using (var stream = OpenOrCreateStreamWrite(name))
+            using (var stream = OpenStreamWrite(name))
                 stream.Write(bytes, 0, bytes.Length);
         }
 
