@@ -18,7 +18,7 @@ nuget Install-Package PortableStorage
 ### For File System 
 A provider for .NET Standard File.
 ```c#
-  var storage = FileStorgeProvider.CreateStorage("c:/storage");
+  var storage = FileStorgeProvider.CreateStorage("c:/storage", true);
   storage.WriteAllText("fileName.txt", "1234");
 ```
 
