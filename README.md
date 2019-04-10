@@ -30,6 +30,10 @@ Check Android Sample in the repository!
 2) Obtain storage object by using the given uri. the uri can also be saved for later usage.
 
 ```c#
+
+private const int browseRequestCode = 100; //Just a unique number
+
+
 // Select a folder by Intent 
 private void BrowseOnClick(object sender, EventArgs eventArgs)
 {
