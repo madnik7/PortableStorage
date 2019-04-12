@@ -18,16 +18,17 @@ namespace PortableStorage
             public Storage storage;
         }
 
+        public int CacheTimeout => _parent?.CacheTimeout ?? _cacheTimeoutFiled;
         public static readonly char SeparatorChar = '/';
 
         private readonly IStorageProvider _provider;
         private readonly int _cacheTimeoutFiled;
-        private int _cacheTimeout => _parent?._cacheTimeout ?? _cacheTimeoutFiled;
         private DateTime _lastCacheTime = DateTime.MinValue;
         private readonly ConcurrentDictionary<string, StorageCache> _storageCache = new ConcurrentDictionary<string, StorageCache>();
         private readonly ConcurrentDictionary<string, StorageEntry> _entryCache = new ConcurrentDictionary<string, StorageEntry>();
         private readonly object _lockObject = new object();
         private string _name;
+        private readonly Storage _parent;
 
 
         public Storage(IStorageProvider provider, int cacheTimeout = -1)
@@ -41,8 +42,6 @@ namespace PortableStorage
             _provider = provider ?? throw new ArgumentNullException("provider");
             _parent = parent ?? throw new ArgumentNullException("parent");
         }
-
-        public Storage _parent { get; }
 
         public string Path => (_parent == null) ? "/" : PathCombine(_parent.Path, Name);
 
@@ -63,12 +62,18 @@ namespace PortableStorage
             get
             {
                 lock (_lockObject)
-                    return _cacheTimeout != 0 && _lastCacheTime.AddSeconds(_cacheTimeout) > DateTime.Now;
+                    return CacheTimeout != 0 && _lastCacheTime.AddSeconds(CacheTimeout) > DateTime.Now;
             }
         }
 
-        public Stream OpenStream(string name, StreamMode mode, StreamAccess access, StreamShare share, int bufferSize = 0)
+        public Stream OpenStream(string path, StreamMode mode, StreamAccess access, StreamShare share, int bufferSize = 0)
         {
+            // manage path
+            var parentPath = System.IO.Path.GetDirectoryName(path);
+            var name = System.IO.Path.GetFileName(path);
+            if (!string.IsNullOrEmpty(parentPath))
+                return OpenStorage(parentPath).OpenStream(name, mode, access, share, bufferSize);
+
             //check mode
             if (mode == StreamMode.Append || mode == StreamMode.Truncate)
                 if (access == StreamAccess.Write && access != StreamAccess.ReadWrite)
@@ -158,12 +163,18 @@ namespace PortableStorage
             }
         }
 
-        public Storage OpenStorage(string name)
+        public Storage OpenStorage(string path)
         {
+            // manage by path
+            var parentPath = System.IO.Path.GetDirectoryName(path);
+            var name = System.IO.Path.GetFileName(path);
+            if (!string.IsNullOrEmpty(parentPath))
+                return OpenStorage(parentPath).OpenStorage(System.IO.Path.GetFileName(name));
+
             //use storage cache
             if (_storageCache.TryGetValue(name, out StorageCache storageCache))
             {
-                if (storageCache.cacheTime.AddSeconds(_cacheTimeout) > DateTime.Now)
+                if (storageCache.cacheTime.AddSeconds(CacheTimeout) > DateTime.Now)
                     return storageCache.storage;
                 _storageCache.TryRemove(name, out _);
             }
@@ -184,8 +195,14 @@ namespace PortableStorage
             }
         }
 
-        public Storage CreateStorage(string name, bool openIfAlreadyExists = true)
+        public Storage CreateStorage(string path, bool openIfAlreadyExists = true)
         {
+            // manage by path
+            var parentPath = System.IO.Path.GetDirectoryName(path);
+            var name = System.IO.Path.GetFileName(path);
+            if (!string.IsNullOrEmpty(parentPath))
+                return CreateStorage(parentPath, true).CreateStorage(System.IO.Path.GetFileName(name), openIfAlreadyExists);
+
             // Check existance, some provider may duplicate the entry with same name
             if (EntryExists(name))
             {
@@ -203,17 +220,35 @@ namespace PortableStorage
             return storage;
         }
 
-        public void RemoveStream(string name)
+        public void RemoveStream(string path)
         {
-            var uri = (GetStreamEntry(name)).Uri;
+            // manage by path
+            var parentPath = System.IO.Path.GetDirectoryName(path);
+            var name = System.IO.Path.GetFileName(path);
+            if (!string.IsNullOrEmpty(parentPath))
+            {
+                OpenStorage(parentPath).RemoveStream(name);
+                return;
+            }
+
+            var uri = GetStreamEntry(name).Uri;
             _provider.RemoveStream(uri);
 
             //update cache
             _entryCache.TryRemove(name, out _);
         }
 
-        public void RemoveStorage(string name)
+        public void RemoveStorage(string path)
         {
+            // manage by path
+            var parentPath = System.IO.Path.GetDirectoryName(path);
+            var name = System.IO.Path.GetFileName(path);
+            if (!string.IsNullOrEmpty(parentPath))
+            {
+                OpenStorage(parentPath).RemoveStorage(name);
+                return;
+            }
+
             var uri = GetStorageEntry(name).Uri;
             _provider.RemoveStorage(uri);
 
@@ -222,8 +257,17 @@ namespace PortableStorage
             _entryCache.TryRemove(name, out _);
         }
 
-        public void Rename(string name, string desName)
+        public void Rename(string path, string desName)
         {
+            // manage by path
+            var parentPath = System.IO.Path.GetDirectoryName(path);
+            var name = System.IO.Path.GetFileName(path);
+            if (!string.IsNullOrEmpty(parentPath))
+            {
+                OpenStorage(parentPath).Rename(name, desName);
+                return;
+            }
+
             var entry = GetEntry(name);
             var newUri = _provider.Rename(entry.Uri, desName);
 
@@ -244,11 +288,11 @@ namespace PortableStorage
             }
         }
 
-        public bool EntryExists(string name)
+        public bool EntryExists(string path)
         {
             try
             {
-                return GetEntry(name) != null;
+                return GetEntry(path) != null;
             }
             catch (StorageNotFoundException)
             {
@@ -256,11 +300,11 @@ namespace PortableStorage
             }
         }
 
-        public bool StorageExists(string name)
+        public bool StorageExists(string path)
         {
             try
             {
-                return GetStorageEntry(name) != null;
+                return GetStorageEntry(path) != null;
             }
             catch (StorageNotFoundException)
             {
@@ -268,11 +312,11 @@ namespace PortableStorage
             }
         }
 
-        public bool StreamExists(string name)
+        public bool StreamExists(string path)
         {
             try
             {
-                return GetStreamEntry(name) != null;
+                return GetStreamEntry(path) != null;
             }
             catch (StorageNotFoundException)
             {
@@ -280,33 +324,40 @@ namespace PortableStorage
             }
         }
 
-        public StorageEntry GetStorageEntry(string name)
+        public StorageEntry GetStorageEntry(string path)
         {
-            return GetEntryHelper(name, true, false);
+            return GetEntryHelper(path, true, false);
         }
 
-        public StorageEntry GetStreamEntry(string name)
+        public StorageEntry GetStreamEntry(string path)
         {
-            return GetEntryHelper(name, false, true);
+            return GetEntryHelper(path, false, true);
         }
 
-        public StorageEntry GetEntry(string name)
+        public StorageEntry GetEntry(string path)
         {
-            return GetEntryHelper(name, true, true);
+            return GetEntryHelper(path, true, true);
         }
 
-        private StorageEntry GetEntryHelper(string itemName, bool includeStorage, bool includeStream)
+        private StorageEntry GetEntryHelper(string path, bool includeStorage, bool includeStream)
         {
-            var entries = GetEntries(itemName);
-            var item = entries.Where(x => x.Name == itemName).FirstOrDefault();
+            // manage by path
+            var parentPath = System.IO.Path.GetDirectoryName(path);
+            var name = System.IO.Path.GetFileName(path);
+            if (!string.IsNullOrEmpty(parentPath))
+                return OpenStorage(parentPath).GetEntryHelper(System.IO.Path.GetFileName(name), includeStorage, includeStream);
+
+            // manage by name
+            var entries = GetEntries(name);
+            var item = entries.Where(x => x.Name == name).FirstOrDefault();
             if (item != null && includeStorage && item.IsStorage) return item;
             if (item != null && includeStream && !item.IsStorage) return item;
-            throw new StorageNotFoundException(Uri, itemName);
+            throw new StorageNotFoundException(Uri, name);
         }
 
-        public void SetAttributes(string name, StreamAttribute attributes)
+        public void SetAttributes(string path, StreamAttribute attributes)
         {
-            var entry = GetEntry(name);
+            var entry = GetEntry(path);
             try
             {
                 _provider.SetAttributes(entry.Uri, attributes);
@@ -317,9 +368,9 @@ namespace PortableStorage
             }
         }
 
-        public StreamAttribute GetAttributes(string name)
+        public StreamAttribute GetAttributes(string path)
         {
-            var entry = GetEntry(name);
+            var entry = GetEntry(path);
             var ret = entry.Attributes;
             return ret;
         }
@@ -327,30 +378,30 @@ namespace PortableStorage
         /// <summary>
         /// A Stream opened in the specified mode and path, with read/write access and not shared.
         /// </summary>
-        public Stream OpenStream(string streamName, StreamMode mode, int bufferSize = 0)
+        public Stream OpenStream(string path, StreamMode mode, int bufferSize = 0)
         {
-            return OpenStream(streamName, mode, StreamAccess.ReadWrite, StreamShare.None, bufferSize);
+            return OpenStream(path, mode, StreamAccess.ReadWrite, StreamShare.None, bufferSize);
         }
 
-        public Stream OpenStreamRead(string name, int bufferSize = 0)
+        public Stream OpenStreamRead(string path, int bufferSize = 0)
         {
-            return OpenStream(name, StreamMode.Open, StreamAccess.Read, StreamShare.Read, bufferSize);
+            return OpenStream(path, StreamMode.Open, StreamAccess.Read, StreamShare.Read, bufferSize);
         }
 
-        public Stream OpenStreamWrite(string name)
+        public Stream OpenStreamWrite(string path)
         {
-            return OpenStreamWrite(name, StreamShare.None);
+            return OpenStreamWrite(path, StreamShare.None);
         }
 
-        public Stream OpenStreamWrite(string name, StreamShare share)
+        public Stream OpenStreamWrite(string path, StreamShare share)
         {
             try
             {
-                return OpenStream(name, StreamMode.Open, StreamAccess.Write, share);
+                return OpenStream(path, StreamMode.Open, StreamAccess.Write, share);
             }
             catch (StorageNotFoundException)
             {
-                return CreateStream(name, share);
+                return CreateStream(path, share);
             }
 
         }
@@ -360,8 +411,14 @@ namespace PortableStorage
             return CreateStream(name, StreamShare.None, overwriteExisting, bufferSize);
         }
 
-        public Stream CreateStream(string name, StreamShare share, bool overwriteExisting = false, int bufferSize = 0)
+        public Stream CreateStream(string path, StreamShare share, bool overwriteExisting = false, int bufferSize = 0)
         {
+            // manage by path
+            var parentPath = System.IO.Path.GetDirectoryName(path);
+            var name = System.IO.Path.GetFileName(path);
+            if (!string.IsNullOrEmpty(parentPath))
+                return CreateStorage(parentPath, true).CreateStream(name, share, overwriteExisting, bufferSize);
+
             if (EntryExists(name) && !overwriteExisting)
                 throw new IOException("Entry already exists!");
 
@@ -376,82 +433,63 @@ namespace PortableStorage
             return result.Stream;
         }
 
-        public Storage OpenStorage(string name, bool createIfNotExists)
+        public Storage OpenStorage(string path, bool createIfNotExists)
         {
             try
             {
-                return OpenStorage(name);
+                return OpenStorage(path);
             }
             catch (StorageNotFoundException)
             {
                 if (!createIfNotExists)
                     throw;
 
-                return CreateStorage(name);
+                return CreateStorage(path);
             }
         }
 
-        public Storage OpenStorageByPath(string path, bool createIfNotExists = false)
+        public string ReadAllText(string path)
         {
-            path = PathUtil.RemoveLastSeparator(path);
-            var parts = path.Split(SeparatorChar);
-
-            var ret = this;
-            foreach (var item in parts)
-                ret = ret.OpenStorage(item, createIfNotExists);
-
-            return ret;
-        }
-
-        public Stream OpenStreamWriteByPath(string path, StreamShare share = StreamShare.None)
-        {
-            var storagePath = System.IO.Path.GetDirectoryName(path);
-            var storage = string.IsNullOrEmpty(storagePath) ? this: OpenStorageByPath(storagePath, true);
-            return storage.OpenStreamWrite(System.IO.Path.GetFileName(path), share);
-        }
-
-        public string ReadAllText(string name)
-        {
-            using (var stream = OpenStreamRead(name))
+            using (var stream = OpenStreamRead(path))
             using (var sr = new StreamReader(stream))
             {
                 return sr.ReadToEnd();
             }
         }
 
-        public string ReadAllText(string name, Encoding encoding)
+        public string ReadAllText(string path, Encoding encoding)
         {
-            using (var stream = OpenStreamRead(name))
+            using (var stream = OpenStreamRead(path))
             using (var sr = new StreamReader(stream, encoding))
             {
                 return sr.ReadToEnd();
             }
         }
 
-        public void WriteAllText(string name, string text, Encoding encoding)
+        public void WriteAllText(string path, string text, Encoding encoding)
         {
-            using (var stream = OpenStreamWrite(name))
+            using (var stream = OpenStreamWrite(path))
             using (var sr = new StreamWriter(stream, encoding))
                 sr.Write(text);
         }
 
-        public void WriteAllText(string name, string text)
+        public void WriteAllText(string path, string text)
         {
-            using (var stream = OpenStreamWrite(name))
+            using (var stream = OpenStreamWrite(path))
             using (var sr = new StreamWriter(stream))
                 sr.Write(text);
         }
 
-        public byte[] ReadAllBytes(string name)
+        public byte[] ReadAllBytes(string path)
         {
-            using (var stream = OpenStreamRead(name))
+            using (var stream = OpenStreamRead(path))
             using (var sr = new BinaryReader(stream))
                 return sr.ReadBytes((int)stream.Length);
         }
 
-        public void WriteAllBytes(string name, byte[] bytes)
+        public void WriteAllBytes(string path, byte[] bytes)
         {
-            using (var stream = OpenStreamWrite(name))
+            using (var stream = OpenStreamWrite(path))
                 stream.Write(bytes, 0, bytes.Length);
         }
 
