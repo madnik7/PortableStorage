@@ -18,8 +18,9 @@ namespace PortableStorage
             public Storage storage;
         }
 
-        public int CacheTimeout => _parent?.CacheTimeout ?? _cacheTimeoutFiled;
+        public int CacheTimeout => Parent?.CacheTimeout ?? _cacheTimeoutFiled;
         public static readonly char SeparatorChar = '/';
+        public Storage Parent { get; }
 
         private readonly IStorageProvider _provider;
         private readonly int _cacheTimeoutFiled;
@@ -28,8 +29,6 @@ namespace PortableStorage
         private readonly ConcurrentDictionary<string, StorageEntry> _entryCache = new ConcurrentDictionary<string, StorageEntry>();
         private readonly object _lockObject = new object();
         private string _name;
-        private readonly Storage _parent;
-
 
         public Storage(IStorageProvider provider, int cacheTimeout = -1)
         {
@@ -40,10 +39,10 @@ namespace PortableStorage
         private Storage(IStorageProvider provider, Storage parent)
         {
             _provider = provider ?? throw new ArgumentNullException("provider");
-            _parent = parent ?? throw new ArgumentNullException("parent");
+            Parent = parent ?? throw new ArgumentNullException("parent");
         }
 
-        public string Path => (_parent == null) ? "/" : PathCombine(_parent.Path, Name);
+        public string Path => (Parent == null) ? "/" : PathCombine(Parent.Path, Name);
 
         public string Name
         {
