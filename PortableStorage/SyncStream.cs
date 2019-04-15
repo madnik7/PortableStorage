@@ -42,36 +42,49 @@ namespace PortableStorage
             get => _position;
             set
             {
+                if (_position == value)
+                    return;
+
+                // check is seekable
                 if (!CanSeek)
                     throw new NotSupportedException();
+
+                // set next offset
                 _position = value;
             }
         }
 
         public override long Seek(long offset, SeekOrigin origin)
         {
-            if (!CanSeek)
-                throw new NotSupportedException();
-
+            long newPosition;
             switch (origin)
             {
                 case SeekOrigin.Begin:
-                    _position = offset;
+                    newPosition = offset;
                     break;
 
                 case SeekOrigin.Current:
-                    _position = offset + _position;
+                    newPosition = offset + _position;
                     break;
 
                 case SeekOrigin.End:
-                    _position = offset + Length;
+                    newPosition = offset + Length;
                     break;
 
                 default:
                     throw new NotSupportedException();
             }
 
-            return Position;
+            if (_position == newPosition)
+                return _position;
+
+            // check is seekable
+            if (!CanSeek)
+                throw new NotSupportedException();
+
+            // set next offset
+            _position = newPosition;
+            return newPosition;
         }
 
         public override int Read(byte[] buffer, int offset, int count)

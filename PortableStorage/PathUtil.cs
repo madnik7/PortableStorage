@@ -5,17 +5,13 @@ namespace PortableStorage
     {
         public static string RemoveLastSeparator(string path)
         {
-            var path2 = path.Replace('\\', '/');
-            if (path2.Length > 0 && path2[path2.Length - 1] == '/')
-                return path.Substring(0, path.Length - 1);
-            return path;
+            return path.TrimEnd(Storage.SeparatorChar);
+
         }
 
-        public static string AddLastSeparator(string path, char directorySeparatorChar)
+        public static string AddLastSeparator(string path)
         {
-            if (path.Length > 0 && path[path.Length - 1] != directorySeparatorChar)
-                path += directorySeparatorChar.ToString();
-            return path;
+            return path.TrimEnd(Storage.SeparatorChar) + '/';
         }
     }
 }

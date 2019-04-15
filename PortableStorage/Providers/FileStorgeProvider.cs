@@ -7,7 +7,7 @@ namespace PortableStorage.Providers
 {
     public class FileStorgeProvider : IStorageProvider
     {
-        public Uri Uri => new Uri(PathUtil.AddLastSeparator(SystemPath, Path.DirectorySeparatorChar));
+        public Uri Uri => new Uri(PathUtil.AddLastSeparator(SystemPath));
         public string SystemPath { get; private set; }
         public bool IsGetEntriesBySearchPatternFast => true;
         public bool IsGetEntryUriByNameFast => true;
@@ -21,7 +21,7 @@ namespace PortableStorage.Providers
 
         public FileStorgeProvider(string path, bool createIfNotExists = false)
         {
-            SystemPath = PathUtil.AddLastSeparator(path, Path.DirectorySeparatorChar);
+            SystemPath = PathUtil.AddLastSeparator(path);
 
             //check existance
             if (!Directory.Exists(path))
