@@ -18,6 +18,13 @@ namespace PortableStorage
             public Storage storage;
         }
 
+
+        public string[] ZipExtensions = { "zip" };
+
+        /// <summary>
+        /// If true the any file in ZipExtensions will be treated as a Storage using ZipStorgeProvider. Default is false
+        /// </summary>
+        public bool IsZipReaderEnabled { get; set; }
         public int CacheTimeout => Parent?.CacheTimeout ?? _cacheTimeoutFiled;
         public static readonly char SeparatorChar = '/';
         public Storage Parent { get; }
@@ -30,10 +37,11 @@ namespace PortableStorage
         private readonly object _lockObject = new object();
         private string _name;
 
-        public Storage(IStorageProvider provider, int cacheTimeout = -1)
+        public Storage(IStorageProvider provider, StorageOptions options = null)
         {
+            options = options ?? new StorageOptions();
             _provider = provider ?? throw new ArgumentNullException("provider");
-            _cacheTimeoutFiled = cacheTimeout==-1 ? 1000 : cacheTimeout;
+            _cacheTimeoutFiled = options.CacheTimeout == -1 ? 1000 : options.CacheTimeout;
         }
 
         private Storage(IStorageProvider provider, Storage parent)

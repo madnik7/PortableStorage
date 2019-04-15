@@ -12,10 +12,14 @@ namespace PortableStorage.Test
 
         private Storage GetTempStorage(bool useCache = true)
         {
-            var tempPath = Path.Combine(TempPath, Guid.NewGuid().ToString());
-            var storage = FileStorgeProvider.CreateStorage(tempPath, true, useCache ? 0 : -1);
-            return storage;
+            var options = new StorageOptions
+            {
+                CacheTimeout = useCache ? -1 : 0
+            };
 
+            var tempPath = Path.Combine(TempPath, Guid.NewGuid().ToString());
+            var storage = FileStorgeProvider.CreateStorage(tempPath, true, options);
+            return storage;
         }
 
         [TestMethod]
