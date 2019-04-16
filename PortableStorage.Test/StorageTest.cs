@@ -18,7 +18,7 @@ namespace PortableStorage.Test
             };
 
             var tempPath = Path.Combine(TempPath, Guid.NewGuid().ToString());
-            var storage = FileStorgeProvider.CreateStorage(tempPath, true, options);
+            var storage = FileStorgeProvider.CreateRootStorage(tempPath, true, options);
             return storage;
         }
 

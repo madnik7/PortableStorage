@@ -31,7 +31,7 @@ namespace PortableStorage
         private readonly object _lockObject = new object();
         private string _name;
 
-        public Storage(IStorageProvider provider, StorageOptions options = null)
+        protected Storage(IStorageProvider provider, StorageOptions options)
         {
             options = options ?? new StorageOptions();
             _provider = provider ?? throw new ArgumentNullException("provider");

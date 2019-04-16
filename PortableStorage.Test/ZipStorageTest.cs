@@ -19,7 +19,7 @@ namespace PortableStorage.Test
             };
 
             var tempPath = Path.Combine(TempPath, Guid.NewGuid().ToString());
-            var storage = FileStorgeProvider.CreateStorage(tempPath, true, options);
+            var storage = FileStorgeProvider.CreateRootStorage(tempPath, true, options);
             return storage;
 
         }
@@ -56,7 +56,7 @@ namespace PortableStorage.Test
         public void Open_zip_storage_and_stream_by_provider()
         {
             var zipStream = GetTempZipStream();
-            var zipStorage = ZipStorgeProvider.CreateStorage(zipStream);
+            var zipStorage = ZipStorgeProvider.CreateRootStorage(zipStream);
 
             Assert.IsTrue(zipStorage.StreamExists("file1.txt"));
             Assert.IsTrue(zipStorage.StreamExists("file4.txt"));

@@ -103,7 +103,7 @@ namespace AndroidSample
 
                 var filename = "test.txt";
                 var sampleText = "Sample Text";
-                var storage = SafStorgeProvider.CreateStorage(this, StorageUri);
+                var storage = SafStorgeProvider.CreateRootStorage(this, StorageUri);
                 storage.CreateStorage("_PortableStorage.Test");
                 storage.WriteAllText(filename, sampleText);
                 var res = storage.ReadAllText(filename);
