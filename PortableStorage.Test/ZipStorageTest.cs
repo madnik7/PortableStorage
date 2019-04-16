@@ -11,7 +11,7 @@ namespace PortableStorage.Test
     {
         private static string TempPath => Path.Combine(Path.GetTempPath(), "_test_portablestroage_zip");
 
-        private Storage GetTempStorage(bool useCache = true)
+        private RootStorage GetTempStorage(bool useCache = true)
         {
             var options = new StorageOptions
             {
@@ -55,35 +55,39 @@ namespace PortableStorage.Test
         [TestMethod]
         public void Open_zip_storage_and_stream_by_provider()
         {
-            var zipStream = GetTempZipStream();
-            var zipStorage = ZipStorgeProvider.CreateRootStorage(zipStream);
+            using (var zipStream = GetTempZipStream())
+            using (var zipStorage = ZipStorgeProvider.CreateRootStorage(zipStream))
+            {
 
-            Assert.IsTrue(zipStorage.StreamExists("file1.txt"));
-            Assert.IsTrue(zipStorage.StreamExists("file4.txt"));
-            Assert.IsTrue(zipStorage.StreamExists("folder1/file2.txt"));
-            Assert.IsTrue(zipStorage.StreamExists("folder_backslash/file.txt"));
-            Assert.IsTrue(zipStorage.StorageExists("folder1/folder2"));
-            Assert.IsFalse(zipStorage.StorageExists("folder1/folder2/file3.txt"));
+                Assert.IsTrue(zipStorage.StreamExists("file1.txt"));
+                Assert.IsTrue(zipStorage.StreamExists("file4.txt"));
+                Assert.IsTrue(zipStorage.StreamExists("folder1/file2.txt"));
+                Assert.IsTrue(zipStorage.StreamExists("folder_backslash/file.txt"));
+                Assert.IsTrue(zipStorage.StorageExists("folder1/folder2"));
+                Assert.IsFalse(zipStorage.StorageExists("folder1/folder2/file3.txt"));
 
-            var str = zipStorage.OpenStorage("folder1").OpenStorage("folder2").ReadAllText("file3.txt");
-            Assert.AreEqual(str, "file3.txt contents.", "unexpected text has been readed");
+                var str = zipStorage.OpenStorage("folder1").OpenStorage("folder2").ReadAllText("file3.txt");
+                Assert.AreEqual(str, "file3.txt contents.", "unexpected text has been readed");
+            }
         }
 
         [TestMethod]
         public void Open_zip_storage_and_stream_by_virtualprovider()
         {
-            var storage = GetTempStorage();
-            var folder1 = storage.CreateStorage("folder1");
+            using (var storage = GetTempStorage())
+            {
+                var folder1 = storage.CreateStorage("folder1");
 
-            using (var zipStreamSrc = GetTempZipStream())
-            using (var zipStreamDest = folder1.CreateStream("test.zip"))
-                zipStreamSrc.CopyTo(zipStreamDest);
+                using (var zipStreamSrc = GetTempZipStream())
+                using (var zipStreamDest = folder1.CreateStream("test.zip"))
+                    zipStreamSrc.CopyTo(zipStreamDest);
 
-            Assert.IsTrue(storage.StorageExists("folder1/test.zip"));
-            Assert.IsTrue(storage.StreamExists("folder1/test.zip"));
-            Assert.IsTrue(storage.StorageExists("folder1/test.zip/folder1"));
-            Assert.IsTrue(storage.StreamExists("folder1/test.zip/folder1/file2.txt"));
-            Assert.AreEqual(storage.ReadAllText("folder1/test.zip/folder1/folder2/file3.txt"), "file3.txt contents.", "unexpected text has been readed");
+                Assert.IsTrue(storage.StorageExists("folder1/test.zip"));
+                Assert.IsTrue(storage.StreamExists("folder1/test.zip"));
+                Assert.IsTrue(storage.StorageExists("folder1/test.zip/folder1"));
+                Assert.IsTrue(storage.StreamExists("folder1/test.zip/folder1/file2.txt"));
+                Assert.AreEqual(storage.ReadAllText("folder1/test.zip/folder1/folder2/file3.txt"), "file3.txt contents.", "unexpected text has been readed");
+            }
         }
 
         [ClassCleanup]

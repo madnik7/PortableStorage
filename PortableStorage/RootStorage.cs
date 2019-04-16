@@ -23,6 +23,7 @@ namespace PortableStorage
             if (disposing)
             {
                 // dispose managed state (managed objects).
+                DisposeInternal();
                 disposedValue = true;
             }
 

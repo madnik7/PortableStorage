@@ -30,6 +30,7 @@ namespace PortableStorage
         private readonly ConcurrentDictionary<string, StorageEntry> _entryCache = new ConcurrentDictionary<string, StorageEntry>();
         private readonly object _lockObject = new object();
         private string _name;
+        private List<Stream> _internalStreams;
 
         protected Storage(IStorageProvider provider, StorageOptions options)
         {
@@ -37,12 +38,14 @@ namespace PortableStorage
             _provider = provider ?? throw new ArgumentNullException("provider");
             _cacheTimeoutFiled = options.CacheTimeout == -1 ? 1000 : options.CacheTimeout;
             _virtualStorageProviders = options.VirtualStorageProviders;
+            _internalStreams = new List<Stream>();
         }
 
         private Storage(IStorageProvider provider, Storage parent)
         {
             _provider = provider ?? throw new ArgumentNullException("provider");
             _virtualStorageProviders = parent._virtualStorageProviders;
+            _internalStreams = parent._internalStreams;
             Parent = parent ?? throw new ArgumentNullException("parent");
         }
 
@@ -191,6 +194,7 @@ namespace PortableStorage
                 if (storageEntry.IsVirtualStorage && _virtualStorageProviders.TryGetValue(System.IO.Path.GetExtension(name), out IVirtualStorageProvider virtualStorageProvider))
                 {
                     var stream = OpenStreamRead(name);
+                    _internalStreams.Add(stream); //should be disposed by RootStorage.Dispose
                     storageProvider = virtualStorageProvider.CreateStorageProvider(stream, storageEntry.Uri, name);
                 }
                 else
@@ -559,6 +563,14 @@ namespace PortableStorage
             };
             return entry;
         }
-    }
 
+        protected void DisposeInternal()
+        {
+            if (Parent != null)
+                throw new Exception("Dispose sould only be called by RootStroage!");
+
+            foreach (var item in _internalStreams)
+                item.Dispose();
+        }
+    }
 }
