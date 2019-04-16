@@ -40,6 +40,10 @@ namespace PortableStorage.Test
                 using (var writer = new StreamWriter(zip.CreateEntry("folder1/file2.txt").Open()))
                     writer.Write("file2.txt contents.");
 
+                using (var writer = new StreamWriter(zip.CreateEntry("\\folder_backslash\\file.txt").Open()))
+                    writer.Write("file2.txt contents.");
+
+
                 using (var writer = new StreamWriter(zip.CreateEntry("folder1/folder2/file3.txt").Open()))
                     writer.Write("file3.txt contents.");
             }
@@ -57,6 +61,7 @@ namespace PortableStorage.Test
             Assert.IsTrue(zipStorage.StreamExists("file1.txt"));
             Assert.IsTrue(zipStorage.StreamExists("file4.txt"));
             Assert.IsTrue(zipStorage.StreamExists("folder1/file2.txt"));
+            Assert.IsTrue(zipStorage.StreamExists("folder_backslash/file.txt"));
             Assert.IsTrue(zipStorage.StorageExists("folder1/folder2"));
             Assert.IsFalse(zipStorage.StorageExists("folder1/folder2/file3.txt"));
 

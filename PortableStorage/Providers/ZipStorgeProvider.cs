@@ -153,7 +153,7 @@ namespace PortableStorage.Providers
 
         private Uri PathToUri(string path)
         {
-            var uri = new UriBuilder(_streamUri?.ToString() ?? $"zip://{path}")
+            var uri = new UriBuilder(_streamUri?.ToString() ?? $"zip://zipstorgeprovider")
             {
                 Query = $"fullname={path}" // we can't use uri path because some zip save "/" as back slash
             };
