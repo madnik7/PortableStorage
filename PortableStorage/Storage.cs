@@ -18,13 +18,6 @@ namespace PortableStorage
             public Storage storage;
         }
 
-
-        public string[] ZipExtensions = { "zip" };
-
-        /// <summary>
-        /// If true the any file in ZipExtensions will be treated as a Storage using ZipStorgeProvider. Default is false
-        /// </summary>
-        public bool IsZipReaderEnabled { get; set; }
         public int CacheTimeout => Parent?.CacheTimeout ?? _cacheTimeoutFiled;
         public static readonly char SeparatorChar = '/';
         public Storage Parent { get; }
