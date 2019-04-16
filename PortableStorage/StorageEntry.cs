@@ -2,8 +2,10 @@
 {
     public class StorageEntry : StorageEntryBase
     {
-        public Storage Parent { get; set; }
-        public string Path { get; set; }
+        public bool IsVirtualStorage { get; internal set; }
+        public Storage Parent { get; internal set; }
+        public string Path { get; internal set; }
+        public bool IsStream { get; internal set; }
         public bool IsHidden => Attributes.HasFlag(StreamAttribute.Hidden) || (!string.IsNullOrEmpty(Name) && Name[0] == '.');
         public bool Exists
         {
@@ -20,6 +22,5 @@
                 }
             }
         }
-
     }
 }

@@ -24,6 +24,7 @@ namespace PortableStorage
 
         private readonly IStorageProvider _provider;
         private readonly int _cacheTimeoutFiled;
+        private readonly IDictionary<string, IVirtualStorageProvider> _virtualStorageProviders;
         private DateTime _lastCacheTime = DateTime.MinValue;
         private readonly ConcurrentDictionary<string, StorageCache> _storageCache = new ConcurrentDictionary<string, StorageCache>();
         private readonly ConcurrentDictionary<string, StorageEntry> _entryCache = new ConcurrentDictionary<string, StorageEntry>();
@@ -35,11 +36,13 @@ namespace PortableStorage
             options = options ?? new StorageOptions();
             _provider = provider ?? throw new ArgumentNullException("provider");
             _cacheTimeoutFiled = options.CacheTimeout == -1 ? 1000 : options.CacheTimeout;
+            _virtualStorageProviders = options.VirtualStorageProviders;
         }
 
         private Storage(IStorageProvider provider, Storage parent)
         {
             _provider = provider ?? throw new ArgumentNullException("provider");
+            _virtualStorageProviders = parent._virtualStorageProviders;
             Parent = parent ?? throw new ArgumentNullException("parent");
         }
 
@@ -180,11 +183,23 @@ namespace PortableStorage
             }
 
             // open storage and add it to cache
-            var uri = GetStorageEntry(name).Uri;
+            var storageEntry = GetStorageEntry(name);
+            var uri = storageEntry.Uri;
             try
             {
-                var providerStorage = _provider.OpenStorage(uri);
-                var storage = new Storage(providerStorage, this);
+                IStorageProvider storageProvider;
+                if (storageEntry.IsVirtualStorage && _virtualStorageProviders.TryGetValue(System.IO.Path.GetExtension(name), out IVirtualStorageProvider virtualStorageProvider))
+                {
+                    var stream = OpenStreamRead(name);
+                    storageProvider = virtualStorageProvider.CreateStorageProvider(stream, storageEntry.Uri, name);
+                }
+                else
+                {
+                    storageProvider = _provider.OpenStorage(uri);
+                }
+
+
+                var storage = new Storage(storageProvider, this);
                 _storageCache.TryAdd(name, new StorageCache() { storage = storage });
                 return storage;
             }
@@ -351,7 +366,7 @@ namespace PortableStorage
             var entries = GetEntries(name);
             var item = entries.Where(x => x.Name == name).FirstOrDefault();
             if (item != null && includeStorage && item.IsStorage) return item;
-            if (item != null && includeStream && !item.IsStorage) return item;
+            if (item != null && includeStream && item.IsStream) return item;
             throw new StorageNotFoundException(Uri, name);
         }
 
@@ -525,10 +540,16 @@ namespace PortableStorage
 
         private StorageEntry ProviderEntryToEntry(StorageEntryBase storageProviderEntry)
         {
+            var isVirtualStorage = false;
+            if (_virtualStorageProviders.TryGetValue(System.IO.Path.GetExtension(storageProviderEntry.Name), out _))
+                isVirtualStorage = true;
+
             var entry = new StorageEntry()
             {
                 Attributes = storageProviderEntry.Attributes,
-                IsStorage = storageProviderEntry.IsStorage,
+                IsVirtualStorage = isVirtualStorage,
+                IsStorage = storageProviderEntry.IsStorage || isVirtualStorage,
+                IsStream = !storageProviderEntry.IsStorage,
                 LastWriteTime = storageProviderEntry.LastWriteTime,
                 Name = storageProviderEntry.Name,
                 Size = storageProviderEntry.Size,
