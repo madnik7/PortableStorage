@@ -18,13 +18,14 @@ namespace PortableStorage
             public Storage storage;
         }
 
-        public int CacheTimeout => Parent?.CacheTimeout ?? _cacheTimeoutFiled;
         public static readonly char SeparatorChar = '/';
+        public int CacheTimeout => Parent?.CacheTimeout ?? _cacheTimeoutFiled;
         public Storage Parent { get; }
+        public IDictionary<string, IVirtualStorageProvider> VirtualStorageProviders => Parent?._virtualStorageProviders ??  _virtualStorageProviders;
 
+        private readonly IDictionary<string, IVirtualStorageProvider> _virtualStorageProviders;
         private readonly IStorageProvider _provider;
         private readonly int _cacheTimeoutFiled;
-        private readonly IDictionary<string, IVirtualStorageProvider> _virtualStorageProviders;
         private DateTime _lastCacheTime = DateTime.MinValue;
         private readonly ConcurrentDictionary<string, StorageCache> _storageCache = new ConcurrentDictionary<string, StorageCache>();
         private readonly ConcurrentDictionary<string, StorageEntry> _entryCache = new ConcurrentDictionary<string, StorageEntry>();
@@ -43,7 +44,6 @@ namespace PortableStorage
         private Storage(IStorageProvider provider, Storage parent)
         {
             _provider = provider ?? throw new ArgumentNullException("provider");
-            _virtualStorageProviders = parent._virtualStorageProviders;
             Parent = parent ?? throw new ArgumentNullException("parent");
         }
 
@@ -218,7 +218,7 @@ namespace PortableStorage
             try
             {
                 IStorageProvider storageProvider;
-                if (storageEntry.IsVirtualStorage && _virtualStorageProviders.TryGetValue(System.IO.Path.GetExtension(name), out IVirtualStorageProvider virtualStorageProvider))
+                if (storageEntry.IsVirtualStorage && VirtualStorageProviders.TryGetValue(System.IO.Path.GetExtension(name), out IVirtualStorageProvider virtualStorageProvider))
                 {
                     var stream = OpenStreamRead(name);
                     _internalObjects.Add(new WeakReference<IDisposable>(stream));
@@ -592,7 +592,7 @@ namespace PortableStorage
         private StorageEntry ProviderEntryToEntry(StorageEntryBase storageProviderEntry)
         {
             var isVirtualStorage = false;
-            if (_virtualStorageProviders.TryGetValue(System.IO.Path.GetExtension(storageProviderEntry.Name), out _))
+            if (VirtualStorageProviders.TryGetValue(System.IO.Path.GetExtension(storageProviderEntry.Name), out _))
                 isVirtualStorage = true;
 
             var entry = new StorageEntry()
