@@ -21,7 +21,7 @@ namespace PortableStorage
         public static readonly char SeparatorChar = '/';
         public int CacheTimeout => Parent?.CacheTimeout ?? _cacheTimeoutFiled;
         public Storage Parent { get; }
-        public IDictionary<string, IVirtualStorageProvider> VirtualStorageProviders => Parent?.VirtualStorageProviders ??  _virtualStorageProviders;
+        public IDictionary<string, IVirtualStorageProvider> VirtualStorageProviders => Parent?.VirtualStorageProviders ?? _virtualStorageProviders;
 
         private readonly IDictionary<string, IVirtualStorageProvider> _virtualStorageProviders;
         private readonly IStorageProvider _provider;
@@ -122,7 +122,7 @@ namespace PortableStorage
         {
             // manage path
             var storage = GetStorageForPath(path, out string name);
-            if (storage!=null)
+            if (storage != null)
                 return storage.OpenStream(name, mode, access, share, bufferSize);
 
             //check mode
@@ -496,12 +496,14 @@ namespace PortableStorage
             if (storage != null)
                 return storage.CreateStream(name, share, overwriteExisting, bufferSize);
 
-            if (EntryExists(name) && !overwriteExisting)
-                throw new IOException("Entry already exists!");
-
-            //try to delete the old one
-            if (overwriteExisting)
-                RemoveStream(name);
+            // Manage already exists
+            if (EntryExists(name))
+            {
+                if (overwriteExisting)
+                    RemoveStream(name); //try to delete the old one
+                else
+                    throw new IOException("Entry already exists!");
+            }
 
             //create new stream
             var result = _provider.CreateStream(name, StreamAccess.ReadWrite, share, bufferSize);

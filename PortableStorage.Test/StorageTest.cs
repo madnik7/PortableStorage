@@ -92,6 +92,19 @@ namespace PortableStorage.Test
             }
         }
 
+        [TestMethod]
+        public void Create_stream_overwrite_existing()
+        {
+            using (var rootStorage = GetTempStorage())
+            {
+                using (var stream = rootStorage.CreateStream("Test/foo1.txt", true))
+                    stream.WriteByte(10);
+
+                using (var stream2 = rootStorage.OpenStreamRead("Test/foo1.txt"))
+                    Assert.AreEqual(stream2.ReadByte(), 10);
+            }
+        }
+
 
         [ClassCleanup]
         public static void ClassCleanup() 
