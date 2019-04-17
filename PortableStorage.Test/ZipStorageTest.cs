@@ -72,6 +72,25 @@ namespace PortableStorage.Test
         }
 
         [TestMethod]
+        public void Open_zip_storage_and_stream_by_virtualprovider()
+        {
+            using (var storage = GetTempStorage())
+            {
+                var folder1 = storage.CreateStorage("folder1");
+
+                using (var zipStreamSrc = GetTempZipStream())
+                using (var zipStreamDest = folder1.CreateStream("test.zip"))
+                    zipStreamSrc.CopyTo(zipStreamDest);
+
+                Assert.IsTrue(storage.StorageExists("folder1/test.zip"));
+                Assert.IsTrue(storage.StreamExists("folder1/test.zip"));
+                Assert.IsTrue(storage.StorageExists("folder1/test.zip/folder1"));
+                Assert.IsTrue(storage.StreamExists("folder1/test.zip/folder1/file2.txt"));
+                Assert.AreEqual(storage.ReadAllText("folder1/test.zip/folder1/folder2/file3.txt"), "file3.txt contents.", "unexpected text has been readed");
+            }
+        }
+
+        [TestMethod]
         public void Dispose_zip_storage_by_virtual_folder()
         {
             using (var storage = GetTempStorage())
@@ -92,24 +111,6 @@ namespace PortableStorage.Test
             }
         }
 
-        [TestMethod]
-        public void Open_zip_storage_and_stream_by_virtualprovider()
-        {
-            using (var storage = GetTempStorage())
-            {
-                var folder1 = storage.CreateStorage("folder1");
-
-                using (var zipStreamSrc = GetTempZipStream())
-                using (var zipStreamDest = folder1.CreateStream("test.zip"))
-                    zipStreamSrc.CopyTo(zipStreamDest);
-
-                Assert.IsTrue(storage.StorageExists("folder1/test.zip"));
-                Assert.IsTrue(storage.StreamExists("folder1/test.zip"));
-                Assert.IsTrue(storage.StorageExists("folder1/test.zip/folder1"));
-                Assert.IsTrue(storage.StreamExists("folder1/test.zip/folder1/file2.txt"));
-                Assert.AreEqual(storage.ReadAllText("folder1/test.zip/folder1/folder2/file3.txt"), "file3.txt contents.", "unexpected text has been readed");
-            }
-        }
 
         [ClassCleanup]
         public static void ClassCleanup()

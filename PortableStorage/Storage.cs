@@ -21,7 +21,7 @@ namespace PortableStorage
         public static readonly char SeparatorChar = '/';
         public int CacheTimeout => Parent?.CacheTimeout ?? _cacheTimeoutFiled;
         public Storage Parent { get; }
-        public IDictionary<string, IVirtualStorageProvider> VirtualStorageProviders => Parent?._virtualStorageProviders ??  _virtualStorageProviders;
+        public IDictionary<string, IVirtualStorageProvider> VirtualStorageProviders => Parent?.VirtualStorageProviders ??  _virtualStorageProviders;
 
         private readonly IDictionary<string, IVirtualStorageProvider> _virtualStorageProviders;
         private readonly IStorageProvider _provider;
