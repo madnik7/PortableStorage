@@ -77,6 +77,8 @@ namespace PortableStorage
         #endregion
 
         public string Path => (Parent == null) ? SeparatorChar.ToString() : PathCombine(Parent.Path, Name);
+        public bool IsRoot => Parent == null;
+        public Storage RootStorage => Parent ?? this;
 
         public string Name
         {
@@ -99,13 +101,29 @@ namespace PortableStorage
             }
         }
 
+        private Storage GetStorageForPath(string path, out string name, bool createIfNotExists = false)
+        {
+            // fix backslash
+            path = path.Replace('\\', SeparatorChar);
+
+            // manage path from root
+            if (path.Length > 0 && path[0] == SeparatorChar)
+                throw new ArgumentException("Path can not start with slash!", nameof(path));
+
+            var parentPath = System.IO.Path.GetDirectoryName(path);
+            name = System.IO.Path.GetFileName(path);
+            if (!string.IsNullOrEmpty(parentPath))
+                return createIfNotExists ? CreateStorage(parentPath) : OpenStorage(parentPath);
+
+            return null;
+        }
+
         public Stream OpenStream(string path, StreamMode mode, StreamAccess access, StreamShare share, int bufferSize = 0)
         {
             // manage path
-            var parentPath = System.IO.Path.GetDirectoryName(path);
-            var name = System.IO.Path.GetFileName(path);
-            if (!string.IsNullOrEmpty(parentPath))
-                return OpenStorage(parentPath).OpenStream(name, mode, access, share, bufferSize);
+            var storage = GetStorageForPath(path, out string name);
+            if (storage!=null)
+                return storage.OpenStream(name, mode, access, share, bufferSize);
 
             //check mode
             if (mode == StreamMode.Append || mode == StreamMode.Truncate)
@@ -198,11 +216,10 @@ namespace PortableStorage
 
         public Storage OpenStorage(string path)
         {
-            // manage by path
-            var parentPath = System.IO.Path.GetDirectoryName(path);
-            var name = System.IO.Path.GetFileName(path);
-            if (!string.IsNullOrEmpty(parentPath))
-                return OpenStorage(parentPath).OpenStorage(System.IO.Path.GetFileName(name));
+            // manage path
+            var storage = GetStorageForPath(path, out string name);
+            if (storage != null)
+                return storage.OpenStorage(name);
 
             //use storage cache
             if (_storageCache.TryGetValue(name, out StorageCache storageCache))
@@ -231,9 +248,9 @@ namespace PortableStorage
                 }
 
 
-                var storage = new Storage(storageProvider, this);
-                AddToCache(name, storage);
-                return storage;
+                var newStorage = new Storage(storageProvider, this);
+                AddToCache(name, newStorage);
+                return newStorage;
             }
             catch (StorageNotFoundException)
             {
@@ -244,11 +261,10 @@ namespace PortableStorage
 
         public Storage CreateStorage(string path, bool openIfAlreadyExists = true)
         {
-            // manage by path
-            var parentPath = System.IO.Path.GetDirectoryName(path);
-            var name = System.IO.Path.GetFileName(path);
-            if (!string.IsNullOrEmpty(parentPath))
-                return CreateStorage(parentPath, true).CreateStorage(System.IO.Path.GetFileName(name), openIfAlreadyExists);
+            // manage path
+            var storage = GetStorageForPath(path, out string name, true);
+            if (storage != null)
+                return storage.CreateStorage(name, openIfAlreadyExists);
 
             // Check existance, some provider may duplicate the entry with same name
             if (EntryExists(name))
@@ -261,11 +277,11 @@ namespace PortableStorage
 
             var result = _provider.CreateStorage(name);
             var entry = ProviderEntryToEntry(result.Entry);
-            var storage = new Storage(result.Storage, this);
+            var newStorage = new Storage(result.Storage, this);
 
-            AddToCache(name, storage);
+            AddToCache(name, newStorage);
             AddToCache(entry);
-            return storage;
+            return newStorage;
         }
 
         private void AddToCache(string name, Storage storage = null)
@@ -288,12 +304,11 @@ namespace PortableStorage
 
         public void RemoveStream(string path)
         {
-            // manage by path
-            var parentPath = System.IO.Path.GetDirectoryName(path);
-            var name = System.IO.Path.GetFileName(path);
-            if (!string.IsNullOrEmpty(parentPath))
+            // manage path
+            var storage = GetStorageForPath(path, out string name);
+            if (storage != null)
             {
-                OpenStorage(parentPath).RemoveStream(name);
+                storage.RemoveStream(name);
                 return;
             }
 
@@ -306,12 +321,11 @@ namespace PortableStorage
 
         public void RemoveStorage(string path)
         {
-            // manage by path
-            var parentPath = System.IO.Path.GetDirectoryName(path);
-            var name = System.IO.Path.GetFileName(path);
-            if (!string.IsNullOrEmpty(parentPath))
+            // manage path
+            var storage = GetStorageForPath(path, out string name);
+            if (storage != null)
             {
-                OpenStorage(parentPath).RemoveStorage(name);
+                storage.RemoveStorage(name);
                 return;
             }
 
@@ -325,12 +339,11 @@ namespace PortableStorage
 
         public void Rename(string path, string desName)
         {
-            // manage by path
-            var parentPath = System.IO.Path.GetDirectoryName(path);
-            var name = System.IO.Path.GetFileName(path);
-            if (!string.IsNullOrEmpty(parentPath))
+            // manage path
+            var storage = GetStorageForPath(path, out string name);
+            if (storage != null)
             {
-                OpenStorage(parentPath).Rename(name, desName);
+                storage.Rename(name, desName);
                 return;
             }
 
@@ -407,11 +420,10 @@ namespace PortableStorage
 
         private StorageEntry GetEntryHelper(string path, bool includeStorage, bool includeStream)
         {
-            // manage by path
-            var parentPath = System.IO.Path.GetDirectoryName(path);
-            var name = System.IO.Path.GetFileName(path);
-            if (!string.IsNullOrEmpty(parentPath))
-                return OpenStorage(parentPath).GetEntryHelper(System.IO.Path.GetFileName(name), includeStorage, includeStream);
+            // manage path
+            var storage = GetStorageForPath(path, out string name);
+            if (storage != null)
+                return storage.GetEntryHelper(name, includeStorage, includeStream);
 
             // manage by name
             var entries = GetEntries(name);
@@ -479,11 +491,10 @@ namespace PortableStorage
 
         public Stream CreateStream(string path, StreamShare share, bool overwriteExisting = false, int bufferSize = 0)
         {
-            // manage by path
-            var parentPath = System.IO.Path.GetDirectoryName(path);
-            var name = System.IO.Path.GetFileName(path);
-            if (!string.IsNullOrEmpty(parentPath))
-                return CreateStorage(parentPath, true).CreateStream(name, share, overwriteExisting, bufferSize);
+            // manage path
+            var storage = GetStorageForPath(path, out string name, true);
+            if (storage != null)
+                return storage.CreateStream(name, share, overwriteExisting, bufferSize);
 
             if (EntryExists(name) && !overwriteExisting)
                 throw new IOException("Entry already exists!");

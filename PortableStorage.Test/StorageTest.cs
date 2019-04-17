@@ -73,6 +73,25 @@ namespace PortableStorage.Test
             }
         }
 
+        [TestMethod]
+        public void Storage_Path()
+        {
+            using (var rootStorage = GetTempStorage())
+            {
+                var storage = rootStorage.CreateStorage("foo3");
+
+                try
+                {
+                    var test = rootStorage.OpenStorage("/");
+                    Assert.Fail("ArgumentException was expected!");
+                }
+                catch (ArgumentException)
+                {
+                    // OK
+                }
+            }
+        }
+
 
         [ClassCleanup]
         public static void ClassCleanup() 
