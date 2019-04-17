@@ -14,17 +14,17 @@ namespace PortableStorage.Providers
         public bool IsGetEntriesBySearchPatternFast => false;
         public bool IsGetEntryUriByNameFast => true;
 
-        public static RootStorage CreateRootStorage(string zipPath, StorageOptions storageOptions = null)
+        public static Storage CreateStorage(string zipPath, StorageOptions storageOptions = null)
         {
             var provider = new ZipStorgeProvider(zipPath);
-            var ret = new RootStorage(provider, storageOptions);
+            var ret = new Storage(provider, storageOptions);
             return ret;
         }
 
-        public static RootStorage CreateRootStorage(Stream stream, Uri streamUri = null, string streamName = null, StorageOptions storageOptions = null)
+        public static Storage CreateStorage(Stream stream, Uri streamUri = null, string streamName = null, StorageOptions storageOptions = null)
         {
             var provider = new ZipStorgeProvider(stream, streamUri, streamName);
-            var ret = new RootStorage(provider, storageOptions);
+            var ret = new Storage(provider, storageOptions);
             return ret;
         }
 
@@ -174,6 +174,10 @@ namespace PortableStorage.Providers
             };
 
             return ret;
+        }
+
+        public void Dispose()
+        {
         }
     }
 }

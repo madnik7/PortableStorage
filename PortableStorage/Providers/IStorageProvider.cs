@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace PortableStorage.Providers
 {
-    public interface IStorageProvider
+    public interface IStorageProvider : IDisposable
     {
         Uri Uri { get; }
         string Name { get; }

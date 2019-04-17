@@ -10,7 +10,7 @@ namespace PortableStorage.Test
     {
         private static string TempPath => Path.Combine(Path.GetTempPath(), "_test_portablestroage");
 
-        private RootStorage GetTempStorage(bool useCache = true)
+        private Storage GetTempStorage(bool useCache = true)
         {
             var options = new StorageOptions
             {

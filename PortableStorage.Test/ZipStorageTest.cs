@@ -11,7 +11,7 @@ namespace PortableStorage.Test
     {
         private static string TempPath => Path.Combine(Path.GetTempPath(), "_test_portablestroage_zip");
 
-        private RootStorage GetTempStorage(bool useCache = true)
+        private Storage GetTempStorage(bool useCache = true)
         {
             var options = new StorageOptions
             {
@@ -56,7 +56,7 @@ namespace PortableStorage.Test
         public void Open_zip_storage_and_stream_by_provider()
         {
             using (var zipStream = GetTempZipStream())
-            using (var zipStorage = ZipStorgeProvider.CreateRootStorage(zipStream))
+            using (var zipStorage = ZipStorgeProvider.CreateStorage(zipStream))
             {
 
                 Assert.IsTrue(zipStorage.StreamExists("file1.txt"));
@@ -68,6 +68,27 @@ namespace PortableStorage.Test
 
                 var str = zipStorage.OpenStorage("folder1").OpenStorage("folder2").ReadAllText("file3.txt");
                 Assert.AreEqual(str, "file3.txt contents.", "unexpected text has been readed");
+            }
+        }
+
+        [TestMethod]
+        public void dispose_zip_storage_by_virtual_folder()
+        {
+            using (var storage = GetTempStorage())
+            {
+                using (var folder1 = storage.CreateStorage("folder1"))
+                {
+
+                    using (var zipStreamSrc = GetTempZipStream())
+                    using (var zipStreamDest = folder1.CreateStream("test.zip"))
+                        zipStreamSrc.CopyTo(zipStreamDest);
+
+                    var stream = storage.OpenStreamRead("folder1/test.zip/folder1/folder2/file3.txt");
+                    stream.Dispose();
+                }
+
+                Assert.IsTrue(storage.StreamExists("folder1/test.zip"));
+                storage.RemoveStream("folder1/test.zip");
             }
         }
 

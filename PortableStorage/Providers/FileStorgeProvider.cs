@@ -12,10 +12,10 @@ namespace PortableStorage.Providers
         public bool IsGetEntriesBySearchPatternFast => true;
         public bool IsGetEntryUriByNameFast => true;
 
-        public static RootStorage CreateRootStorage(string path, bool createIfNotExists, StorageOptions storageOptions = null)
+        public static Storage CreateRootStorage(string path, bool createIfNotExists, StorageOptions storageOptions = null)
         {
             var provider = new FileStorgeProvider(path, createIfNotExists);
-            var ret = new RootStorage(provider, storageOptions);
+            var ret = new Storage(provider, storageOptions);
             return ret;
         }
 
@@ -61,7 +61,7 @@ namespace PortableStorage.Providers
             var fs = OpenStream(filePath, FileMode.Create, access, share, bufferSize);
             var ret = new CreateStreamResult()
             {
-                Entry = StorageProviderEntryFromPath(filePath),
+                EntryBase = StorageProviderEntryFromPath(filePath),
                 Stream = fs
             };
             return ret;
@@ -203,6 +203,10 @@ namespace PortableStorage.Providers
             };
 
             return ret;
+        }
+
+        public void Dispose()
+        {
         }
     }
 }
