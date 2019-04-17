@@ -6,6 +6,7 @@ A Portable Storage for .NET
 * Easy to add provider
 * .NET Standard 2.0 File Provider
 * Android Storage Access Framework (SAF) File Provider
+* ZipStorage provider
 
 ## nuget
 * https://www.nuget.org/packages/PortableStorage/
@@ -15,14 +16,14 @@ A Portable Storage for .NET
 
 nuget Install-Package PortableStorage
 
-### For File System 
+### File System Provider
 A provider for .NET Standard File.
 ```c#
   var storage = FileStorgeProvider.CreateStorage("c:/storage", true);
   storage.WriteAllText("fileName.txt", "1234");
 ```
 
-### For Android Storage Access Framework (SAF)
+### Android Storage Access Framework (SAF) Provider
 A provider for Android SAF, easy access to Android external memory, USB OTG and sdcard.
 Check Android Sample in the repository!
 
@@ -52,4 +53,12 @@ protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result
         storage.WriteAllText("test.txt", "123");
     }
 }
+```
+
+### Zip Storage Provider (Read-Only)
+Provider access to ZipFile same as a storage seamlessly.
+
+```c#
+  var storage = ZipStorgeProvider.CreateStorage("c:/temp/foo.zip");
+  var testInZip = storage.ReadAllText("fileName.txt");
 ```
