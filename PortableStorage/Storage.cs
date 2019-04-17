@@ -221,7 +221,7 @@ namespace PortableStorage
                 if (storageEntry.IsVirtualStorage && _virtualStorageProviders.TryGetValue(System.IO.Path.GetExtension(name), out IVirtualStorageProvider virtualStorageProvider))
                 {
                     var stream = OpenStreamRead(name);
-                    _internalObjects.Add(new WeakReference<IDisposable>(stream)); //should be disposed by RootStorage.Dispose
+                    _internalObjects.Add(new WeakReference<IDisposable>(stream));
 
                     storageProvider = virtualStorageProvider.CreateStorageProvider(stream, storageEntry.Uri, name);
                 }

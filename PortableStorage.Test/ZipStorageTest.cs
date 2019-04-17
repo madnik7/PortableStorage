@@ -19,7 +19,7 @@ namespace PortableStorage.Test
             };
 
             var tempPath = Path.Combine(TempPath, Guid.NewGuid().ToString());
-            var storage = FileStorgeProvider.CreateRootStorage(tempPath, true, options);
+            var storage = FileStorgeProvider.CreateStorage(tempPath, true, options);
             return storage;
 
         }
@@ -72,7 +72,7 @@ namespace PortableStorage.Test
         }
 
         [TestMethod]
-        public void dispose_zip_storage_by_virtual_folder()
+        public void Dispose_zip_storage_by_virtual_folder()
         {
             using (var storage = GetTempStorage())
             {
