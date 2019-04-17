@@ -105,11 +105,11 @@ namespace PortableStorage.Providers
                 var entryFolder = GetEntryFolderName(entry.FullName);
 
                 // add file in current path
-                if (entryFolder == _path)
+                if (entryFolder == _path && entry.Name!="") // "" some zip may have storage info
                 {
                     ret.Add(StorageProviderEntryFromZipEntry(entry));
                 }
-                // add folder in current path (/aa 
+                // add folder in current path 
                 else if (entryFolder.IndexOf(_path) == 0)
                 {
                     var folderName = entryFolder.Substring(_path.Length, entryFolder.IndexOf(Storage.SeparatorChar, _path.Length) - _path.Length);

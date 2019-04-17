@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
   <metadata>
     <id>PortableStorage</id>
-    <version>1.1.19</version>
+    <version>1.1.20</version>
     <authors>Mohammad Nikravan</authors>
     <owners>Mohammad Nikravan</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
