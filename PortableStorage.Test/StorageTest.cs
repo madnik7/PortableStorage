@@ -10,13 +10,8 @@ namespace PortableStorage.Test
     {
         private static string TempPath => Path.Combine(Path.GetTempPath(), "_test_portablestroage");
 
-        private Storage GetTempStorage(bool useCache = true)
+        private Storage GetTempStorage(StorageOptions options = null)
         {
-            var options = new StorageOptions
-            {
-                CacheTimeout = useCache ? -1 : 0
-            };
-
             var tempPath = Path.Combine(TempPath, Guid.NewGuid().ToString());
             var storage = FileStorgeProvider.CreateStorage(tempPath, true, options);
             return storage;
@@ -105,9 +100,30 @@ namespace PortableStorage.Test
             }
         }
 
+        [TestMethod]
+        public void Case_sensitive()
+        {
+            using (var rootStorage = GetTempStorage(new StorageOptions() { IgnoreCase = false }))
+            {
+                rootStorage.WriteAllText("foo1/filename1.txt", "123");
+                Assert.IsTrue(rootStorage.EntryExists("foo1/filename1.txt"));
+                Assert.IsFalse(rootStorage.EntryExists("foo1/Filename1.txt"));
+                Assert.IsFalse(rootStorage.EntryExists("Foo1/filename1.txt"));
+            }
+
+            using (var rootStorage = GetTempStorage(new StorageOptions() { IgnoreCase = true }))
+            {
+                rootStorage.WriteAllText("foo1/filename1.txt", "123");
+                Assert.IsTrue(rootStorage.EntryExists("foo1/filename1.txt"));
+                Assert.IsTrue(rootStorage.EntryExists("foo1/Filename1.txt"));
+                Assert.IsTrue(rootStorage.EntryExists("Foo1/filename1.txt"));
+            }
+        }
+
+
 
         [ClassCleanup]
-        public static void ClassCleanup() 
+        public static void ClassCleanup()
         {
             Directory.Delete(TempPath, true);
         }

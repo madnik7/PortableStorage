@@ -21,9 +21,9 @@ namespace PortableStorage
         public static readonly char SeparatorChar = '/';
         public int CacheTimeout => Parent?.CacheTimeout ?? _cacheTimeoutFiled;
         public Storage Parent { get; }
-        public IDictionary<string, IVirtualStorageProvider> VirtualStorageProviders => Parent?.VirtualStorageProviders ?? _virtualStorageProviders;
+        public IDictionary<string, IVirtualStorageProvider> VirtualStorageProviders { get; }
+        public bool IgnoreCase { get; }
 
-        private readonly IDictionary<string, IVirtualStorageProvider> _virtualStorageProviders;
         private readonly IStorageProvider _provider;
         private readonly int _cacheTimeoutFiled;
         private DateTime _lastCacheTime = DateTime.MinValue;
@@ -38,13 +38,16 @@ namespace PortableStorage
             options = options ?? new StorageOptions();
             _provider = provider ?? throw new ArgumentNullException("provider");
             _cacheTimeoutFiled = options.CacheTimeout == -1 ? 1000 : options.CacheTimeout;
-            _virtualStorageProviders = options.VirtualStorageProviders;
+            VirtualStorageProviders = options.VirtualStorageProviders;
+            IgnoreCase = options.IgnoreCase;
         }
 
         private Storage(IStorageProvider provider, Storage parent)
         {
             _provider = provider ?? throw new ArgumentNullException("provider");
             Parent = parent ?? throw new ArgumentNullException("parent");
+            IgnoreCase = parent.IgnoreCase;
+            VirtualStorageProviders = parent.VirtualStorageProviders;
         }
 
         #region IDisposable Support
@@ -167,8 +170,9 @@ namespace PortableStorage
                 {
                     if (!string.IsNullOrEmpty(searchPattern))
                     {
+                        var regexOptions = IgnoreCase ? RegexOptions.IgnoreCase : RegexOptions.None;
                         var regXpattern = WildcardToRegex(searchPattern);
-                        return _entryCache.Where(x => Regex.IsMatch(x.Key, regXpattern)).Select(x => x.Value).ToArray();
+                        return _entryCache.Where(x => Regex.IsMatch(x.Key, regXpattern, regexOptions)).Select(x => x.Value).ToArray();
                     }
                     return _entryCache.Select(x => x.Value).ToArray();
                 }
@@ -196,8 +200,9 @@ namespace PortableStorage
                 //apply searchPattern
                 if (searchPattern != null)
                 {
+                    var regexOptions = IgnoreCase ? RegexOptions.IgnoreCase : RegexOptions.None;
                     var regXpattern = WildcardToRegex(searchPattern);
-                    entries = entries.Where(x => Regex.IsMatch(x.Name, regXpattern)).ToArray();
+                    entries = entries.Where(x => Regex.IsMatch(x.Name, regXpattern, regexOptions)).ToArray();
                 }
             }
 
@@ -427,7 +432,7 @@ namespace PortableStorage
 
             // manage by name
             var entries = GetEntries(name);
-            var item = entries.Where(x => x.Name == name).FirstOrDefault();
+            var item = entries.FirstOrDefault();
             if (item != null && includeStorage && item.IsStorage) return item;
             if (item != null && includeStream && item.IsStream) return item;
             throw new StorageNotFoundException(Uri, name);
