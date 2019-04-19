@@ -48,21 +48,19 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Mono.Android" />
+    <Reference Include="PortableStorage, Version=1.0.10.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\PortableStorage.1.1.22\lib\netstandard2.0\PortableStorage.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="packages.config" />
     <None Include="PortableStorage.Android.nuspec" />
     <Compile Include="ChannelStream.cs" />
     <Compile Include="SafStorageHelper.cs" />
     <Compile Include="SafStorgeProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\PortableStorage\PortableStorage.csproj">
-      <Project>{037613f6-867c-4b8e-b487-40da92be73bd}</Project>
-      <Name>PortableStorage</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

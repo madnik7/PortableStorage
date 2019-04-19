@@ -89,11 +89,19 @@ namespace PortableStorage.Providers
 
         private string GetEntryFolderName(string fullName)
         {
-            var dirName = Path.GetDirectoryName(fullName)
-                .Replace('\\', Storage.SeparatorChar) //change backslash to slash
-                .Trim(Storage.SeparatorChar); //remove start and end separator
-            dirName = Storage.SeparatorChar + dirName;
-            return dirName == Storage.SeparatorChar.ToString() ? dirName : PathUtil.AddLastSeparator(dirName);
+            return GetEntryFolderName(fullName, out _);
+        }
+
+        private string GetEntryFolderName(string fullName, out string fixFullName)
+        {
+            //fix and add first separator to  fullname
+            fullName = fullName.Replace('\\', Storage.SeparatorChar);
+            fullName = Storage.SeparatorChar + fullName.TrimStart(Storage.SeparatorChar);
+            fixFullName = fullName;
+
+            // find folder
+            var dirName = Path.GetDirectoryName(fullName).Replace('\\', Storage.SeparatorChar); //change backslash to slash
+            return PathUtil.AddLastSeparator(dirName);
         }
 
         public StorageEntryBase[] GetEntries(string searchPattern)
@@ -102,17 +110,27 @@ namespace PortableStorage.Providers
             var folders = new Dictionary<string, ZipArchiveEntry>();
             foreach (var entry in _zipArchive.Entries)
             {
-                var entryFolder = GetEntryFolderName(entry.FullName);
+                var entryFolder = GetEntryFolderName(entry.FullName, out string fullName);
+                if (entryFolder.IndexOf(_path) != 0)
+                    continue; //not exists in current folder
+
+                // find item part
+                // if current folder is "/folder1/sub1/aa.txt" then itemPart is "sub1/aa.txt"
+                var itemPart = fullName.Substring(_path.Length).Replace('\\', Storage.SeparatorChar); 
+                if (string.IsNullOrEmpty(itemPart)) 
+                    continue; //no item part means it posint to current storage
 
                 // add file in current path
-                if (entryFolder == _path && entry.Name!="") // "" some zip may have storage info
+                if (entryFolder == _path && entry.Name!="") // if entry.Name is empty it means it is empty folder not a file
                 {
                     ret.Add(StorageProviderEntryFromZipEntry(entry));
                 }
                 // add folder in current path 
-                else if (entryFolder.IndexOf(_path) == 0)
+                else
                 {
-                    var folderName = entryFolder.Substring(_path.Length, entryFolder.IndexOf(Storage.SeparatorChar, _path.Length) - _path.Length);
+                    var nextSeparatorIndex = itemPart.IndexOf(Storage.SeparatorChar);
+                    if (nextSeparatorIndex == -1) nextSeparatorIndex = itemPart.Length;
+                    var folderName = itemPart.Substring(0, nextSeparatorIndex);
                     if (!folders.TryGetValue(folderName, out ZipArchiveEntry lastEntry) || lastEntry.LastWriteTime < entry.LastWriteTime)
                         folders[folderName] = entry;
                 }

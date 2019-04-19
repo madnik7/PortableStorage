@@ -5,6 +5,7 @@ using Android.Runtime;
 using Android.Widget;
 using PortableStorage.Droid;
 using System;
+using System.IO;
 
 namespace AndroidSample
 {
@@ -15,6 +16,7 @@ namespace AndroidSample
 
         private Button selectFolderButton;
         private Button readWriteButton;
+        private Button readZipButton;
         private TextView infoView;
         private TextView uriView;
         private void InitUI()
@@ -39,6 +41,13 @@ namespace AndroidSample
             };
             readWriteButton.Click += ReadWriteClick;
             buttonLayout.AddView(readWriteButton);
+
+            readZipButton = new Button(this)
+            {
+                Text = "Read Zip Contents",
+            };
+            readZipButton.Click += ReadZipClick;
+            buttonLayout.AddView(readZipButton);
 
             //add uri
             uriView = new TextView(this)
@@ -93,6 +102,34 @@ namespace AndroidSample
             SafStorageHelper.BrowserFolder(this, browseRequestCode);
         }
 
+        private void ReadZipClick(object sender, EventArgs eventArgs)
+        {
+            try
+            {
+                using (var assetStream = Assets.Open("Test.zip"))
+                using (var zipStream = new MemoryStream())
+                {
+                    assetStream.CopyTo(zipStream); //just make it seekable. it doesn't need if it is openned from file
+                    using (var zipStorage = PortableStorage.Providers.ZipStorgeProvider.CreateStorage(zipStream))
+                    {
+                        var text = zipStorage.ReadAllText("Folder1/File1.txt");
+                        if (text == "File1 Text.")
+                        {
+                            infoView.Text = "Info: The zip content has been readed successfully :)\n\r";
+                        }
+                        else
+                        {
+                            throw new Exception("The sample file content couldn't be readed properly!");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                infoView.Text = "Error: " + ex.Message;
+            }
+        }
+
         private void ReadWriteClick(object sender, EventArgs eventArgs)
         {
             try
@@ -111,6 +148,10 @@ namespace AndroidSample
                 {
                     infoView.Text = "Info: The content has been written and readed successfully :)\n\r";
                     infoView.Text += "Now you have a access to the storage even after reloading the App.";
+                }
+                else
+                {
+                    throw new Exception("The sample file content couldn't be readed properly!");
                 }
             }
             catch (Exception ex)

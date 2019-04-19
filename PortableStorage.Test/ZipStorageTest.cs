@@ -91,6 +91,20 @@ namespace PortableStorage.Test
         }
 
         [TestMethod]
+        public void Open_zip_storage_by_resource()
+        {
+            using (var zipStream = new MemoryStream(Resource.TestZip))
+            using (var zipStorage = ZipStorgeProvider.CreateStorage(zipStream))
+            {
+                var text = zipStorage.ReadAllText("Folder1/File1.txt");
+                Assert.AreEqual(text, "File1 Text.", "The sample file content couldn't be readed properly!");
+                Assert.IsTrue(zipStorage.StreamExists("Root.txt"));
+                Assert.IsTrue(zipStorage.StorageExists("Folder1"));
+            }
+        }
+
+
+        [TestMethod]
         public void Dispose_zip_storage_by_virtual_folder()
         {
             using (var storage = GetTempStorage())
