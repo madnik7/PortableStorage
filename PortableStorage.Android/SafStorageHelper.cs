@@ -17,18 +17,13 @@ namespace PortableStorage.Droid
         /// <summary>
         /// return null if the request does not belong to requestId
         /// </summary>
-        public static Uri ResolveFromActivityResult(Activity activity, int requestCode, Result resultCode, Intent data, int originalRequestCode)
+        public static Uri ResolveFromActivityResult(Activity activity, Intent data)
         {
-            if (requestCode == originalRequestCode && resultCode == Result.Ok)
-            {
-                var androidUri = data.Data;
-                var takeFlags = data.Flags & (ActivityFlags.GrantReadUriPermission | ActivityFlags.GrantWriteUriPermission);
-                activity.ContentResolver.TakePersistableUriPermission(androidUri, takeFlags);
-                var storageUri = DocumentsContract.BuildDocumentUriUsingTree(androidUri, DocumentsContract.GetTreeDocumentId(androidUri));
-                return new Uri(storageUri.ToString());
-            }
-
-            return null;
+            var androidUri = data.Data;
+            var takeFlags = data.Flags & (ActivityFlags.GrantReadUriPermission | ActivityFlags.GrantWriteUriPermission);
+            activity.ContentResolver.TakePersistableUriPermission(androidUri, takeFlags);
+            var storageUri = DocumentsContract.BuildDocumentUriUsingTree(androidUri, DocumentsContract.GetTreeDocumentId(androidUri));
+            return new Uri(storageUri.ToString());
         }
     }
 }

@@ -12,7 +12,7 @@ namespace AndroidSample
     [Activity(Label = "Portable Storage Sample for SAF", MainLauncher = true, Theme = "@android:style/Theme.Holo.Light")]
     public class MainActivity : Activity
     {
-        private const int browseRequestCode = 100;
+        private const int BROWSE_REQUEST_CODE = 100;
 
         private Button selectFolderButton;
         private Button readWriteButton;
@@ -99,7 +99,7 @@ namespace AndroidSample
 
         private void BrowseOnClick(object sender, EventArgs eventArgs)
         {
-            SafStorageHelper.BrowserFolder(this, browseRequestCode);
+            SafStorageHelper.BrowserFolder(this, BROWSE_REQUEST_CODE);
         }
 
         private void ReadZipClick(object sender, EventArgs eventArgs)
@@ -160,21 +160,31 @@ namespace AndroidSample
             }
         }
 
-        protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent data)
+        protected override void OnActivityResult2(int requestCode, [GeneratedEnum] Result resultCode, Intent data)
         {
             base.OnActivityResult(requestCode, resultCode, data);
 
             try
             {
-                var uri = SafStorageHelper.ResolveFromActivityResult(this, requestCode, resultCode, data, browseRequestCode);
-                if (uri != null)
-                    StorageUri = uri;
+                if (requestCode== BROWSE_REQUEST_CODE && resultCode== Result.Ok)
+                    StorageUri = SafStorageHelper.ResolveFromActivityResult(this, data);
             }
             catch (Exception ex)
             {
                 infoView.Text = "Error: " + ex.Message;
             }
+        }
 
+        protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent data)
+        {
+            base.OnActivityResult(requestCode, resultCode, data);
+            if (requestCode == BROWSE_REQUEST_CODE && resultCode == Result.Ok)
+            {
+                var uri = SafStorageHelper.ResolveFromActivityResult(this, data);
+                var storage = SafStorgeProvider.CreateStorage(this, uri);
+                storage.CreateStorage("_PortableStorage.Test");
+                storage.WriteAllText("test.txt", "123");
+            }
         }
     }
 }
