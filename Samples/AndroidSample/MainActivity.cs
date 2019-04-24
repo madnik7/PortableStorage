@@ -160,7 +160,7 @@ namespace AndroidSample
             }
         }
 
-        protected override void OnActivityResult2(int requestCode, [GeneratedEnum] Result resultCode, Intent data)
+        protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent data)
         {
             base.OnActivityResult(requestCode, resultCode, data);
 
@@ -172,18 +172,6 @@ namespace AndroidSample
             catch (Exception ex)
             {
                 infoView.Text = "Error: " + ex.Message;
-            }
-        }
-
-        protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent data)
-        {
-            base.OnActivityResult(requestCode, resultCode, data);
-            if (requestCode == BROWSE_REQUEST_CODE && resultCode == Result.Ok)
-            {
-                var uri = SafStorageHelper.ResolveFromActivityResult(this, data);
-                var storage = SafStorgeProvider.CreateStorage(this, uri);
-                storage.CreateStorage("_PortableStorage.Test");
-                storage.WriteAllText("test.txt", "123");
             }
         }
     }
