@@ -206,6 +206,10 @@ namespace PortableStorage.Droid
 
         private Stream OpenStream(Android.Net.Uri androidUri, StreamMode mode, StreamAccess access, StreamShare share, int bufferSize = 0)
         {
+            if (access == StreamAccess.ReadWrite)
+                throw new ArgumentException("StreamMode.ReadWrite does not support!");
+
+
             var resolver = Context.ContentResolver;
             string streamMode = "";
             if (bufferSize == 0) bufferSize = 4096;
@@ -213,20 +217,19 @@ namespace PortableStorage.Droid
             switch (mode)
             {
                 case StreamMode.Append:
-                    if (access == StreamAccess.Read) throw new ArgumentException("StreamMode.append only support StreamAccess.write access.");
+                    if (access == StreamAccess.Read) throw new ArgumentException("StreamMode.Append only support StreamAccess.write access.");
                     if (access == StreamAccess.Write) streamMode = "wa";
-                    if (access == StreamAccess.ReadWrite) throw new ArgumentException("StreamMode.append only support StreamAccess.write access.");
+                    if (access == StreamAccess.ReadWrite) throw new ArgumentException("StreamMode.Append only support StreamAccess.write access.");
                     break;
 
                 case StreamMode.Open:
                     if (access == StreamAccess.Read) streamMode = "r";
                     if (access == StreamAccess.Write) streamMode = "rw"; //rw instead w; because w does not support seek
-                    if (access == StreamAccess.ReadWrite) streamMode = "rw";
                     break;
 
                 case StreamMode.Truncate:
-                    if (access == StreamAccess.Read) throw new ArgumentException("StreamMode.truncate does not support StreamAccess.read access.");
-                    if (access == StreamAccess.ReadWrite) throw new ArgumentException("StreamMode.truncate does not support StreamAccess.readWrite access.");
+                    if (access == StreamAccess.Read) throw new ArgumentException("StreamMode.Truncate does not support StreamAccess.read access.");
+                    if (access == StreamAccess.ReadWrite) throw new ArgumentException("StreamMode.Truncate does not support StreamAccess.readWrite access.");
                     if (access == StreamAccess.Write) streamMode = "rwt";
                     break;
             }
@@ -234,7 +237,7 @@ namespace PortableStorage.Droid
 
             var parcelFD = resolver.OpenFileDescriptor(androidUri, streamMode);
             var stream = new ChannelStream(parcelFD, streamMode);
-            var ret = (Stream)new PortableStorage.BufferedStream(stream, bufferSize);
+            var ret = (Stream)new BufferedStream(stream, bufferSize);
             return ret;
         }
 

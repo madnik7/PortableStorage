@@ -458,14 +458,6 @@ namespace PortableStorage
             return ret;
         }
 
-        /// <summary>
-        /// A Stream opened in the specified mode and path, with read/write access and not shared.
-        /// </summary>
-        public Stream OpenStream(string path, StreamMode mode, int bufferSize = 0)
-        {
-            return OpenStream(path, mode, StreamAccess.ReadWrite, StreamShare.None, bufferSize);
-        }
-
         public Stream OpenStreamRead(string path, int bufferSize = 0)
         {
             return OpenStream(path, StreamMode.Open, StreamAccess.Read, StreamShare.Read, bufferSize);

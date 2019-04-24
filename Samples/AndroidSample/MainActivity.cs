@@ -141,9 +141,10 @@ namespace AndroidSample
                 var filename = "test.txt";
                 var sampleText = "Sample Text";
                 var storage = SafStorgeProvider.CreateStorage(this, StorageUri);
-                storage.CreateStorage("_PortableStorage.Test");
-                storage.WriteAllText(filename, sampleText);
-                var res = storage.ReadAllText(filename);
+                var testStorage = storage.CreateStorage("_PortableStorage.Test");
+
+                testStorage.WriteAllText(filename, sampleText);
+                var res = testStorage.ReadAllText(filename);
                 if (res == sampleText)
                 {
                     infoView.Text = "Info: The content has been written and readed successfully :)\n\r";
@@ -166,7 +167,7 @@ namespace AndroidSample
 
             try
             {
-                if (requestCode== BROWSE_REQUEST_CODE && resultCode== Result.Ok)
+                if (requestCode == BROWSE_REQUEST_CODE && resultCode == Result.Ok)
                     StorageUri = SafStorageHelper.ResolveFromActivityResult(this, data);
             }
             catch (Exception ex)
