@@ -503,7 +503,7 @@ namespace PortableStorage
             }
 
             //create new stream
-            var result = _provider.CreateStream(name, StreamAccess.ReadWrite, share, bufferSize);
+            var result = _provider.CreateStream(name, StreamAccess.Write, share, bufferSize);
             var entry = ProviderEntryToEntry(result.EntryBase);
             AddToCache(entry);
             return result.Stream;
