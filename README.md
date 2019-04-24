@@ -45,9 +45,9 @@ private void BrowseOnClick(object sender, EventArgs eventArgs)
 protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent data)
 {
     base.OnActivityResult(requestCode, resultCode, data);
-    var uri = SafStorageHelper.ResolveFromActivityResult(this, requestCode, resultCode, data, browseRequestCode);
-    if (uri != null)
+    if (requestCode == BROWSE_REQUEST_CODE && resultCode == Result.Ok)
     {
+        var uri = SafStorageHelper.ResolveFromActivityResult(this, data);
         var storage = SafStorgeProvider.CreateStorage(this, uri);
         storage.CreateStorage("_PortableStorage.Test");
         storage.WriteAllText("test.txt", "123");
