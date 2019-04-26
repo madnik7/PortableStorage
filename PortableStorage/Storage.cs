@@ -151,18 +151,31 @@ namespace PortableStorage
             return _provider.GetFreeSpace();
         }
 
+        /// <param name="searchPattern">can include path and wildcard. eg: /folder/file.*</param>
         public StorageEntry[] GetStorageEntries(string searchPattern = null)
         {
             return GetEntries(searchPattern).Where(x => x.IsStorage).ToArray();
         }
 
+        /// <param name="searchPattern">can include path and wildcard. eg: /folder/file.*</param>
         public StorageEntry[] GetStreamEntries(string searchPattern = null)
         {
             return GetEntries(searchPattern).Where(x => !x.IsStorage).ToArray();
         }
 
+        /// <param name="searchPattern">can include path and wildcard. eg: /folder/file.*</param>
         public StorageEntry[] GetEntries(string searchPattern = null)
         {
+            // manage path
+            if (!string.IsNullOrEmpty(searchPattern))
+            {
+                var storage = GetStorageForPath(searchPattern, out string newSearchPattern);
+                if (storage != null)
+                    return storage.GetEntries(newSearchPattern);
+                searchPattern = newSearchPattern;
+            }
+
+
             //check is cache available
             lock (_lockObject)
             {
@@ -425,17 +438,12 @@ namespace PortableStorage
 
         private StorageEntry GetEntryHelper(string path, bool includeStorage, bool includeStream)
         {
-            // manage path
-            var storage = GetStorageForPath(path, out string name);
-            if (storage != null)
-                return storage.GetEntryHelper(name, includeStorage, includeStream);
-
             // manage by name
-            var entries = GetEntries(name);
+            var entries = GetEntries(path);
             var item = entries.FirstOrDefault();
             if (item != null && includeStorage && item.IsStorage) return item;
             if (item != null && includeStream && item.IsStream) return item;
-            throw new StorageNotFoundException(Uri, name);
+            throw new StorageNotFoundException(Uri, path);
         }
 
         public void SetAttributes(string path, StreamAttribute attributes)
