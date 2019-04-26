@@ -146,7 +146,7 @@ namespace PortableStorage.Providers
                     LastWriteTime = folder.Value.LastWriteTime.DateTime,
                     Size = 0,
                     Name = folder.Key,
-                    Uri = PathToUri(GetEntryFolderName(folder.Value.FullName))
+                    Uri = PathToUri(PathUtil.AddLastSeparator(Path.Combine(_path, folder.Key)))
                 });
             }
 

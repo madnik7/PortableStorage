@@ -28,24 +28,13 @@ namespace PortableStorage.Test
         {
             var buf = new byte[10000];
 
-            using (var zip = new ZipArchive(new MemoryStream(buf), ZipArchiveMode.Create))
+            using (var zipArchive = new ZipArchive(new MemoryStream(buf), ZipArchiveMode.Create))
             {
-
-                using (var writer = new StreamWriter(zip.CreateEntry("file1.txt").Open()))
-                    writer.Write("file1.txt  contents.");
-
-                using (var writer = new StreamWriter(zip.CreateEntry("/file4.txt").Open()))
-                    writer.Write("file1.txt  contents.");
-
-                using (var writer = new StreamWriter(zip.CreateEntry("folder1/file2.txt").Open()))
-                    writer.Write("file2.txt contents.");
-
-                using (var writer = new StreamWriter(zip.CreateEntry("\\folder_backslash\\file.txt").Open()))
-                    writer.Write("file2.txt contents.");
-
-
-                using (var writer = new StreamWriter(zip.CreateEntry("folder1/folder2/file3.txt").Open()))
-                    writer.Write("file3.txt contents.");
+                AddToZipArchive(zipArchive, "file1.txt", "file1.txt contents.");
+                AddToZipArchive(zipArchive, "/file4.txt", "file4.txt contents.");
+                AddToZipArchive(zipArchive, "folder1/file2.txt", "file2.txt contents.");
+                AddToZipArchive(zipArchive, "\\folder_backslash\\file.txt", "file.txt contents.");
+                AddToZipArchive(zipArchive, "folder1/folder2/file3.txt", "file3.txt contents.");
             }
 
             return new MemoryStream(buf);
@@ -68,6 +57,39 @@ namespace PortableStorage.Test
 
                 var str = zipStorage.OpenStorage("folder1").OpenStorage("folder2").ReadAllText("file3.txt");
                 Assert.AreEqual(str, "file3.txt contents.", "unexpected text has been readed");
+            }
+        }
+
+        private static void AddToZipArchive(ZipArchive zipArchive, string path, string text)
+        {
+            //css/css.txt
+            using (var stream = zipArchive.CreateEntry(path).Open())
+            using (var writer = new StreamWriter(stream))
+                writer.Write(text);
+        }
+
+        [TestMethod]
+        public void Open_zip_storage_and_stream_by_ZipArchive_without_directory_entry()
+        {
+            var buf = new byte[10000];
+            using (var zipArchive = new ZipArchive(new MemoryStream(buf), ZipArchiveMode.Create))
+            {
+                AddToZipArchive(zipArchive, "folder1/folder1/folder1/file1.zip", "z");
+                AddToZipArchive(zipArchive, "folder1/folder1/folder1/file2.zip", "z");
+            }
+
+            using (var zipStream = new MemoryStream(buf))
+            {
+                var zipStorage = ZipStorgeProvider.CreateStorage(zipStream);
+                Assert.IsTrue(zipStorage.StorageExists("folder1"));
+                Assert.IsTrue(zipStorage.StorageExists("folder1/folder1"));
+                Assert.IsTrue(zipStorage.StorageExists("folder1/folder1"));
+                Assert.IsTrue(zipStorage.StorageExists("folder1/folder1/folder1"));
+                Assert.IsTrue(zipStorage.StreamExists("folder1/folder1/folder1/file1.zip"));
+                Assert.IsTrue(zipStorage.StreamExists("folder1/folder1/folder1/file2.zip"));
+
+                var str = zipStorage.ReadAllText("folder1/folder1/folder1/file2.zip");
+                Assert.AreEqual(str, "z", "unexpected text has been readed");
             }
         }
 
@@ -124,7 +146,6 @@ namespace PortableStorage.Test
                 storage.RemoveStream("folder1/test.zip");
             }
         }
-
 
         [ClassCleanup]
         public static void ClassCleanup()
