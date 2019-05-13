@@ -130,7 +130,7 @@ namespace PortableStorage
 
             //check mode
             if (mode == StreamMode.Append || mode == StreamMode.Truncate)
-                if (access == StreamAccess.Write && access != StreamAccess.ReadWrite)
+                if (access != StreamAccess.Write && access != StreamAccess.ReadWrite)
                     throw new ArgumentException($"{mode} needs StreamAccess.write access.");
 
             var entry = GetStreamEntry(name);
@@ -471,22 +471,16 @@ namespace PortableStorage
             return OpenStream(path, StreamMode.Open, StreamAccess.Read, StreamShare.Read, bufferSize);
         }
 
-        public Stream OpenStreamWrite(string path)
-        {
-            return OpenStreamWrite(path, StreamShare.None);
-        }
-
-        public Stream OpenStreamWrite(string path, StreamShare share)
+        public Stream OpenStreamWrite(string path, bool truncateIfExists = false)
         {
             try
             {
-                return OpenStream(path, StreamMode.Open, StreamAccess.Write, share);
+                return OpenStream(path, truncateIfExists ? StreamMode.Truncate : StreamMode.Open, StreamAccess.Write, StreamShare.None);
             }
             catch (StorageNotFoundException)
             {
-                return CreateStream(path, share);
+                return CreateStream(path, truncateIfExists);
             }
-
         }
 
         public Stream CreateStream(string name, bool overwriteExisting = false, int bufferSize = 0)
@@ -552,14 +546,14 @@ namespace PortableStorage
 
         public void WriteAllText(string path, string text, Encoding encoding)
         {
-            using (var stream = OpenStreamWrite(path))
+            using (var stream = OpenStreamWrite(path, true))
             using (var sr = new StreamWriter(stream, encoding))
                 sr.Write(text);
         }
 
         public void WriteAllText(string path, string text)
         {
-            using (var stream = OpenStreamWrite(path))
+            using (var stream = OpenStreamWrite(path, true))
             using (var sr = new StreamWriter(stream))
                 sr.Write(text);
         }

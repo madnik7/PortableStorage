@@ -120,7 +120,17 @@ namespace PortableStorage.Test
             }
         }
 
-
+        [TestMethod]
+        public void WriteAllText_overwrite_oldfile()
+        {
+            using (var rootStorage = GetTempStorage())
+            {
+                var path = "foo1/filename1.txt";
+                rootStorage.WriteAllText(path, "123456789");
+                rootStorage.WriteAllText(path, "123");
+                Assert.AreEqual(rootStorage.ReadAllText(path), "123");
+            }
+        }
 
         [ClassCleanup]
         public static void ClassCleanup()
