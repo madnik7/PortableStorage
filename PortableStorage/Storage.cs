@@ -421,19 +421,28 @@ namespace PortableStorage
             }
         }
 
-        public StorageEntry GetStorageEntry(string path)
-        {
-            return GetEntryHelper(path, true, false);
-        }
 
-        public StorageEntry GetStreamEntry(string path)
-        {
-            return GetEntryHelper(path, false, true);
-        }
+        public StorageEntry GetStorageEntry(string path) => GetEntryHelper(path, true, false);
+        public bool TryGetStorageEntry(string path, out StorageEntry storageEntry) => TryGetEntryHelper(path, true, false, out storageEntry);
 
-        public StorageEntry GetEntry(string path)
+        public StorageEntry GetStreamEntry(string path) => GetEntryHelper(path, false, true);
+        public bool TryGetStreamEntry(string path, out StorageEntry storageEntry) => TryGetEntryHelper(path, false, true, out storageEntry);
+
+        public StorageEntry GetEntry(string path) => GetEntryHelper(path, true, true);
+        public bool TryGetEntry(string path, out StorageEntry storageEntry) => TryGetEntryHelper(path, true, true, out storageEntry);
+
+        private bool TryGetEntryHelper(string path, bool includeStorage, bool includeStream, out StorageEntry storageEntry)
         {
-            return GetEntryHelper(path, true, true);
+            try
+            {
+                storageEntry = GetEntryHelper(path, includeStorage, includeStream);
+                return true;
+            }
+            catch (StorageNotFoundException)
+            {
+                storageEntry = null;
+                return false;
+            }
         }
 
         private StorageEntry GetEntryHelper(string path, bool includeStorage, bool includeStream)
