@@ -132,6 +132,46 @@ namespace PortableStorage.Test
             }
         }
 
+        [TestMethod]
+        public void CopyTo()
+        {
+            using (var destStorage = GetTempStorage())
+            using (var rootStorage = GetTempStorage())
+            {
+                var text = "123456789";
+                var path = "foo1/filename1.txt";
+                rootStorage.WriteAllText(path, text);
+                rootStorage.WriteAllText("foo1/foo11/filename111.txt", text);
+                rootStorage.Copy(path, "foo1/filename2.txt");
+                Assert.AreEqual(rootStorage.ReadAllText("foo1/filename2.txt"), text);
+
+                rootStorage.Copy(path, "foo2/");
+                Assert.AreEqual(rootStorage.ReadAllText("foo2/filename1.txt"), text);
+
+                rootStorage.Copy(path, "foo3/foo4/zz.txt");
+                Assert.AreEqual(rootStorage.ReadAllText("foo3/foo4/zz.txt"), text);
+
+                rootStorage.Copy(path, destStorage, "foo1/");
+                Assert.AreEqual(destStorage.ReadAllText("foo1/filename1.txt"), text);
+
+                rootStorage.Copy(path, destStorage, "foo1/zz.txt");
+                Assert.AreEqual(destStorage.ReadAllText("foo1/zz.txt"), text);
+
+                rootStorage.Copy("foo1", "zfoo1/");
+                Assert.AreEqual(rootStorage.ReadAllText("zfoo1/foo1/foo11/filename111.txt"), text);
+
+                rootStorage.Copy("foo1", "zfoo2");
+                Assert.AreEqual(rootStorage.ReadAllText("zfoo2/foo11/filename111.txt"), text);
+
+                rootStorage.CopyTo(destStorage, "foo1_copy");
+                Assert.AreEqual(destStorage.ReadAllText("foo1_copy/foo1/foo11/filename111.txt"), text);
+
+                rootStorage.CopyTo(destStorage.CreateStorage("total"));
+                Assert.AreEqual(destStorage.ReadAllText("total/foo1/foo11/filename111.txt"), text);
+
+            }
+        }
+
         [ClassCleanup]
         public static void ClassCleanup()
         {

@@ -593,6 +593,35 @@ namespace PortableStorage
             return ret;
         }
 
+        public void Copy(string sourcePath, string destinationPath, bool overwrite = false) => Copy(GetEntry(sourcePath), this, destinationPath, overwrite);
+        public void Copy(string sourcePath, Storage destinationStorage, string destinationPath, bool overwrite = false) => Copy(GetEntry(sourcePath), destinationStorage, destinationPath, overwrite);
+        public void CopyTo(Storage destinationStorage, string destinationPath, bool overwrite = false) => CopyTo(destinationStorage.CreateStorage(destinationPath), overwrite);
+        public void CopyTo(Storage destinationStorage, bool overwrite=false)
+        {
+            foreach (var item in GetEntries())
+                Copy(item.Name, destinationStorage, "", overwrite);
+        }
+
+        public static void Copy(StorageEntry srcEntry, Storage destinationStorage, string destinationPath, bool overwrite = false)
+        {
+            // add source filename to destination path if dest path is a folder (ended with separator)
+            if (string.IsNullOrEmpty(System.IO.Path.GetFileName(destinationPath)))
+                destinationPath = PathCombine(destinationPath, System.IO.Path.GetFileName(srcEntry.Name));
+
+            if (srcEntry.IsStream)
+            {
+                using (var srcStream = srcEntry.Parent.OpenStreamRead(srcEntry.Name))
+                using (var desStream = destinationStorage.CreateStream(destinationPath, overwrite))
+                    srcStream.CopyTo(desStream);
+            }
+            else
+            {
+                var storage = srcEntry.Parent.OpenStorage(srcEntry.Name);
+                storage.CopyTo(destinationStorage, destinationPath, overwrite);
+            }
+        }
+
+
 
         public static string WildcardToRegex(string pattern)
         {
