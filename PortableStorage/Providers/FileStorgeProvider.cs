@@ -170,8 +170,6 @@ namespace PortableStorage.Providers
         private string PathFromUri(Uri uri)
         {
             var name = Path.GetFileName(uri.LocalPath);
-            if (name.Contains(".."))
-                throw new ArgumentException("parent access has been rejected!", "uri");
             return Path.Combine(SystemPath, name);
         }
 
