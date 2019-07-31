@@ -380,6 +380,7 @@ namespace PortableStorage
                 {
                     entry.Name = desName;
                     entry.Uri = newUri;
+                    entry.Path = PathCombine(Path, desName);
                     AddToCache(entry);
                 }
             }

@@ -48,6 +48,10 @@ namespace PortableStorage.Test
                 rootStorage.Rename("foo2/foo3/foo4/filename1.txt", "filename3.txt");
                 Assert.IsTrue(rootStorage.EntryExists("foo2/foo3/foo4/filename3.txt"));
                 Assert.IsTrue(storage.EntryExists("foo3/foo4/filename3.txt"));
+
+                rootStorage.Rename("foo2/foo3/foo4", "foo4-rename");
+                Assert.IsTrue(rootStorage.EntryExists("foo2/foo3/foo4-rename"));
+                Assert.IsTrue(rootStorage.EntryExists("foo2/foo3/foo4-rename/filename3.txt"));
             }
         }
 

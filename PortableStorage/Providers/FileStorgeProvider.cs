@@ -93,7 +93,13 @@ namespace PortableStorage.Providers
         {
             var srcPath = PathFromUri(uri);
             var desPath = Path.Combine(SystemPath, desName);
-            File.Move(srcPath, desPath);
+
+            var attr = File.GetAttributes(srcPath);
+            if (attr.HasFlag(FileAttributes.Directory))
+                Directory.Move(srcPath, desPath);
+            else
+                File.Move(srcPath, desPath);
+
             return PathToUri(desPath);
         }
 
