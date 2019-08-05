@@ -147,6 +147,32 @@ namespace PortableStorage.Test
             }
         }
 
+        [TestMethod]
+        public void Deleted_Mapped_VirtualFolder()
+        {
+            using (var storage = GetTempStorage())
+            {
+                using (var folder1 = storage.CreateStorage("folder1"))
+                {
+
+                    using (var zipStreamSrc = GetTempZipStream())
+                    using (var zipStreamDest = folder1.CreateStream("test.zip"))
+                        zipStreamSrc.CopyTo(zipStreamDest);
+
+                    var stream = storage.OpenStreamRead("folder1/test.zip/folder1/folder2/file3.txt");
+
+                    //try delete the zip file while another stream in open
+                    storage.Rename("folder1/test.zip", "test2.zip");
+
+                    var stream2 = storage.OpenStreamRead("folder1/test2.zip/folder1/folder2/file3.txt");
+                    storage.RemoveStorage("folder1");
+
+                }
+            }
+
+        }
+
+
         [ClassCleanup]
         public static void ClassCleanup()
         {

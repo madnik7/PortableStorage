@@ -31,7 +31,7 @@ namespace PortableStorage
         private readonly ConcurrentDictionary<string, StorageEntry> _entryCache = new ConcurrentDictionary<string, StorageEntry>();
         private readonly object _lockObject = new object();
         private string _name;
-        private readonly List<WeakReference<IDisposable>> _internalObjects = new List<WeakReference<IDisposable>>();
+        private readonly ConcurrentDictionary<string, WeakReference<IDisposable>> _internalObjects = new ConcurrentDictionary<string, WeakReference<IDisposable>>();
 
         public Storage(IStorageProvider provider, StorageOptions options)
         {
@@ -61,7 +61,7 @@ namespace PortableStorage
             {
                 // dispose managed state (managed objects).
                 foreach (var item in _internalObjects)
-                    if (item.TryGetTarget(out IDisposable target))
+                    if (item.Value.TryGetTarget(out IDisposable target))
                         target?.Dispose();
                 _provider.Dispose();
                 _disposedValue = true;
@@ -256,7 +256,7 @@ namespace PortableStorage
                 if (storageEntry.IsVirtualStorage && VirtualStorageProviders.TryGetValue(System.IO.Path.GetExtension(name), out IVirtualStorageProvider virtualStorageProvider))
                 {
                     var stream = OpenStreamRead(name);
-                    _internalObjects.Add(new WeakReference<IDisposable>(stream));
+                    _internalObjects.TryAdd(name, new WeakReference<IDisposable>(stream));
 
                     storageProvider = virtualStorageProvider.CreateStorageProvider(stream, storageEntry.Uri, name);
                 }
@@ -302,21 +302,15 @@ namespace PortableStorage
             return newStorage;
         }
 
-        private void AddToCache(string name, Storage storage = null)
+        private void AddToCache(string name, Storage storage)
         {
-            lock (_lockObject)
-            {
-                _storageCache.TryAdd(name, new StorageCache() { storage = storage });
-                _internalObjects.Add(new WeakReference<IDisposable>(storage));
-            }
+            _storageCache.TryAdd(name, new StorageCache() { storage = storage });
+            _internalObjects.TryAdd(name, new WeakReference<IDisposable>(storage));
         }
 
         private void AddToCache(StorageEntry entry)
         {
-            lock (_lockObject)
-            {
-                _entryCache.TryAdd(entry.Name, entry);
-            }
+            _entryCache.TryAdd(entry.Name, entry);
         }
 
 
@@ -330,6 +324,10 @@ namespace PortableStorage
                 return;
             }
 
+            // release virtual map stream if opened
+            ReleaseInternalObject(name);
+
+            //
             var uri = GetStreamEntry(name).Uri;
             _provider.RemoveStream(uri);
 
@@ -347,12 +345,21 @@ namespace PortableStorage
                 return;
             }
 
+            ReleaseInternalObject(name);
+
+            // rename physically
             var uri = GetStorageEntry(name).Uri;
             _provider.RemoveStorage(uri);
 
             //update cache
             _storageCache.TryRemove(name, out _);
             _entryCache.TryRemove(name, out _);
+        }
+
+        private void ReleaseInternalObject(string name)
+        {
+            if (_internalObjects.TryGetValue(name, out WeakReference<IDisposable> obj) && obj.TryGetTarget(out IDisposable target))
+                target?.Dispose();
         }
 
         public void Rename(string path, string desName)
@@ -365,10 +372,14 @@ namespace PortableStorage
                 return;
             }
 
+            // release virtual map stream if opened
+            ReleaseInternalObject(name);
+
+            // rename physically
             var entry = GetEntry(name);
             var newUri = _provider.Rename(entry.Uri, desName);
 
-            //update the cache
+            // update the cache
             lock (_lockObject)
             {
                 if (_storageCache.TryRemove(name, out StorageCache storageCache))
@@ -597,7 +608,7 @@ namespace PortableStorage
         public void Copy(string sourcePath, string destinationPath, bool overwrite = false) => Copy(GetEntry(sourcePath), this, destinationPath, overwrite);
         public void Copy(string sourcePath, Storage destinationStorage, string destinationPath, bool overwrite = false) => Copy(GetEntry(sourcePath), destinationStorage, destinationPath, overwrite);
         public void CopyTo(Storage destinationStorage, string destinationPath, bool overwrite = false) => CopyTo(destinationStorage.CreateStorage(destinationPath), overwrite);
-        public void CopyTo(Storage destinationStorage, bool overwrite=false)
+        public void CopyTo(Storage destinationStorage, bool overwrite = false)
         {
             foreach (var item in GetEntries())
                 Copy(item.Name, destinationStorage, "", overwrite);
