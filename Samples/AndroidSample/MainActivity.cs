@@ -137,22 +137,22 @@ namespace AndroidSample
                 if (StorageUri == null)
                     throw new Exception("No folder has been selected!");
 
-
                 var filename = "test.txt";
                 var sampleText = "Sample Text";
-                var storage = SafStorgeProvider.CreateStorage(this, StorageUri);
-                var testStorage = storage.CreateStorage("_PortableStorage.Test");
-
-                testStorage.WriteAllText(filename, sampleText);
-                var res = testStorage.ReadAllText(filename);
-                if (res == sampleText)
+                using (var storage = SafStorgeProvider.CreateStorage(this, StorageUri))
+                using (var testStorage = storage.CreateStorage("_PortableStorage.Test"))
                 {
-                    infoView.Text = "Info: The content has been written and readed successfully :)\n\r";
-                    infoView.Text += "Now you have a access to the storage even after reloading the App.";
-                }
-                else
-                {
-                    throw new Exception("The sample file content couldn't be readed properly!");
+                    testStorage.WriteAllText(filename, sampleText);
+                    var res = testStorage.ReadAllText(filename);
+                    if (res == sampleText)
+                    {
+                        infoView.Text = "Info: The content has been written and readed successfully :)\n\r";
+                        infoView.Text += "Now you have a access to the storage even after reloading the App.";
+                    }
+                    else
+                    {
+                        throw new Exception("The sample file content couldn't be readed properly!");
+                    }
                 }
             }
             catch (Exception ex)

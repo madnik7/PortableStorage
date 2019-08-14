@@ -153,8 +153,8 @@ namespace PortableStorage.Droid
         private void RemoveStream(Android.Net.Uri docUri)
         {
             //some storage (maybe older android) does not free space till truncate the file. it is a temporaray solution
-            var stream = OpenStream(docUri, StreamMode.Truncate, StreamAccess.Write, StreamShare.None);
-            stream.Dispose();
+            //var stream = OpenStream(docUri, StreamMode.Truncate, StreamAccess.Write, StreamShare.None);
+            //stream.Dispose();
 
             if (!DocumentsContract.DeleteDocument(Context.ContentResolver, docUri))
                 throw new Exception($"Could not delete stream. Uri: {docUri}");
@@ -168,25 +168,28 @@ namespace PortableStorage.Droid
 
         public void RemoveStorage(Android.Net.Uri docUri)
         {
-            var storage = (SafStorgeProvider)OpenStorage(docUri);
-            storage.EraseStorage(); //some OTG flags does not release free space so clear its contents manually
+            //some OTG flags does not release cause lost directory so remove directory recursively
+            var subStorages = GetEntries().Where(x => x.IsStorage).Select(x => (SafStorgeProvider)OpenStorage(docUri));
+            foreach (var subStorage in subStorages)
+            {
+                subStorage.EraseStorage();
+                subStorage.Dispose();
+            }
+
             if (!DocumentsContract.DeleteDocument(Context.ContentResolver, docUri))
                 throw new Exception($"Could not delete storage. Uri: {docUri}");
         }
 
         private void EraseStorage()
         {
-            var entries = GetEntries();
-
             //erase substorage
-            var storageEntries = entries.Where(x => x.IsStorage).Select(x => new SafStorgeProvider(Context, Android.Net.Uri.Parse(x.Uri.ToString())));
-            foreach (var item in storageEntries)
-                item.EraseStorage();
-
-            //erase all streams
-            var streamEntries = entries.Where(x => !x.IsStorage);
-            foreach (var item in streamEntries)
-                RemoveStream(item.Uri);
+            foreach (var entry in GetEntries())
+            {
+                if (entry.IsStorage)
+                    RemoveStorage(entry.Uri);
+                //else
+                  //  RemoveStream(item.Uri);
+            }
         }
 
         public Uri GetEntryUriByName(string name)
@@ -204,7 +207,7 @@ namespace PortableStorage.Droid
             return OpenStream(AndroidUriFromChildNetUri(uri), mode, access, share, bufferSize);
         }
 
-        private Stream OpenStream(Android.Net.Uri androidUri, StreamMode mode, StreamAccess access, StreamShare share, int bufferSize = 0)
+        private Stream OpenStream(Android.Net.Uri androidUri, StreamMode mode, StreamAccess access, StreamShare _, int bufferSize = 0)
         {
             if (access == StreamAccess.ReadWrite)
                 throw new ArgumentException("StreamMode.ReadWrite does not support!");
@@ -323,6 +326,7 @@ namespace PortableStorage.Droid
             return dtDateTime;
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Code Quality", "IDE0051:Remove unused private members", Justification = "<Pending>")]
         private bool IsStorageUri(Android.Net.Uri docUri)
         {
             var res = Context.ContentResolver.GetType(docUri);
