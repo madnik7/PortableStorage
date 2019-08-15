@@ -284,6 +284,10 @@ namespace PortableStorage
             if (storage != null)
                 return storage.CreateStorage(name, openIfAlreadyExists);
 
+            // validate name
+            if (string.IsNullOrEmpty(path?.Trim()))
+                throw new ArgumentException("invalid path name!", "path");
+
             // Check existance, some provider may duplicate the entry with same name
             if (EntryExists(name))
             {

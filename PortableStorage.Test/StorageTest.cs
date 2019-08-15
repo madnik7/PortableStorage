@@ -137,6 +137,24 @@ namespace PortableStorage.Test
         }
 
         [TestMethod]
+        public void Open_empty_path_should_throw_invalidpath()
+        {
+            using (var rootStorage = GetTempStorage())
+            {
+                try
+                {
+                    rootStorage.OpenStorage("", true);
+                    Assert.Fail("Storage not exists exception expected");
+                }
+                catch (ArgumentException ex)
+                {
+                    Assert.AreEqual(ex.ParamName, "path");
+                }
+            }
+
+        }
+
+        [TestMethod]
         public void CopyTo()
         {
             using (var destStorage = GetTempStorage())
