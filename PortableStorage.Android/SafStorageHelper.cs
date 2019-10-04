@@ -11,7 +11,11 @@ namespace PortableStorage.Droid
         public static void BrowserFolder(Activity activity, int requestCode)
         {
             using (var intent = new Intent(Intent.ActionOpenDocumentTree))
+            {
+                intent.PutExtra("android.content.extra.SHOW_ADVANCED", true);
+                intent.PutExtra("android.content.extra.FANCY", true);
                 activity.StartActivityForResult(intent, requestCode);
+            }
         }
 
         /// <summary>
