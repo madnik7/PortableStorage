@@ -39,52 +39,62 @@ namespace PortableStorage
 
         public override long Position
         {
-            get => _position;
+            get
+            {
+                lock (_stream)
+                    return _position;
+            }
             set
             {
-                if (_position == value)
-                    return;
+                lock (_stream)
+                {
+                    if (_position == value)
+                        return;
+
+                    // check is seekable
+                    if (!CanSeek)
+                        throw new NotSupportedException();
+
+                    // set next offset
+                    _position = value;
+                }
+            }
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            lock (_stream)
+            {
+                long newPosition;
+                switch (origin)
+                {
+                    case SeekOrigin.Begin:
+                        newPosition = offset;
+                        break;
+
+                    case SeekOrigin.Current:
+                        newPosition = offset + _position;
+                        break;
+
+                    case SeekOrigin.End:
+                        newPosition = offset + Length;
+                        break;
+
+                    default:
+                        throw new NotSupportedException();
+                }
+
+                if (_position == newPosition)
+                    return _position;
 
                 // check is seekable
                 if (!CanSeek)
                     throw new NotSupportedException();
 
                 // set next offset
-                _position = value;
+                _position = newPosition;
+                return newPosition;
             }
-        }
-
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            long newPosition;
-            switch (origin)
-            {
-                case SeekOrigin.Begin:
-                    newPosition = offset;
-                    break;
-
-                case SeekOrigin.Current:
-                    newPosition = offset + _position;
-                    break;
-
-                case SeekOrigin.End:
-                    newPosition = offset + Length;
-                    break;
-
-                default:
-                    throw new NotSupportedException();
-            }
-
-            if (_position == newPosition)
-                return _position;
-
-            // check is seekable
-            if (!CanSeek)
-                throw new NotSupportedException();
-
-            // set next offset
-            _position = newPosition;
-            return newPosition;
         }
 
         public override int Read(byte[] buffer, int offset, int count)

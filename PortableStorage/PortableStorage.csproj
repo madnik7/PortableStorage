@@ -11,6 +11,7 @@
     <Description>A Portable Storage for .NET</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon></PackageIcon>
   </PropertyGroup>
 
 </Project>
