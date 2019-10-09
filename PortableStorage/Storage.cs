@@ -81,7 +81,7 @@ namespace PortableStorage
 
         public string Path => (Parent == null) ? SeparatorChar.ToString() : PathCombine(Parent.Path, Name);
         public bool IsRoot => Parent == null;
-        public Storage RootStorage => Parent ?? this;
+        public Storage RootStorage => Parent?.RootStorage ?? this;
 
         public string Name
         {
@@ -111,7 +111,7 @@ namespace PortableStorage
 
             // manage path from root
             if (path.Length > 0 && path[0] == SeparatorChar)
-                throw new ArgumentException("Path can not start with slash!", nameof(path));
+                return RootStorage.GetStorageForPath(path.Remove(0, 1), out name, createIfNotExists); // back to root
 
             var parentPath = System.IO.Path.GetDirectoryName(path);
             name = System.IO.Path.GetFileName(path);

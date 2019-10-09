@@ -73,21 +73,17 @@ namespace PortableStorage.Test
         }
 
         [TestMethod]
-        public void Storage_Path()
+        public void RootStorage_Path()
         {
             using (var rootStorage = GetTempStorage())
             {
-                var storage = rootStorage.CreateStorage("foo3");
+                var storage = rootStorage.CreateStorage("foo2");
+                storage.WriteAllText("foo3/foo4/filename1.txt", "123");
+                rootStorage.Rename("foo2/foo3/foo4/filename1.txt", "filename3.txt");
 
-                try
-                {
-                    var test = rootStorage.OpenStorage("/");
-                    Assert.Fail("ArgumentException was expected!");
-                }
-                catch (ArgumentException)
-                {
-                    // OK
-                }
+                Assert.IsFalse(storage.EntryExists("foo2/foo3"));
+                Assert.IsTrue(storage.EntryExists("/foo2/foo3"));
+                Assert.AreEqual(storage.RootStorage.Path, Storage.SeparatorChar.ToString());
             }
         }
 
@@ -144,7 +140,7 @@ namespace PortableStorage.Test
                 try
                 {
                     rootStorage.OpenStorage("", true);
-                    Assert.Fail("Storage not exists exception expected");
+                    Assert.Fail("StorageNotExistsException expected");
                 }
                 catch (ArgumentException ex)
                 {
