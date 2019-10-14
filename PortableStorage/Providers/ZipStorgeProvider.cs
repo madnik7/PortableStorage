@@ -78,13 +78,16 @@ namespace PortableStorage.Providers
 
         public IStorageProvider OpenStorage(Uri uri)
         {
-            var path = PathFromUri(uri);
-            var exists = _zipArchive.Entries.Any(x => GetEntryFolderName(x.FullName).IndexOf(path) == 0);
-            if (!exists)
-                throw new StorageNotFoundException(uri);
+            lock (_zipArchive)
+            {
+                var path = PathFromUri(uri);
+                var exists = _zipArchive.Entries.Any(x => GetEntryFolderName(x.FullName).IndexOf(path) == 0);
+                if (!exists)
+                    throw new StorageNotFoundException(uri);
 
-            var ret = new ZipStorgeProvider(this, path);
-            return ret;
+                var ret = new ZipStorgeProvider(this, path);
+                return ret;
+            }
         }
 
         private string GetEntryFolderName(string fullName)
@@ -106,60 +109,67 @@ namespace PortableStorage.Providers
 
         public StorageEntryBase[] GetEntries(string searchPattern)
         {
-            var ret = new List<StorageEntryBase>();
-            var folders = new Dictionary<string, ZipArchiveEntry>();
-            foreach (var entry in _zipArchive.Entries)
+            lock (_zipArchive)
             {
-                var entryFolder = GetEntryFolderName(entry.FullName, out string fullName);
-                if (entryFolder.IndexOf(_path) != 0)
-                    continue; //not exists in current folder
 
-                // find item part
-                // if current folder is "/folder1/sub1/aa.txt" then itemPart is "sub1/aa.txt"
-                var itemPart = fullName.Substring(_path.Length).Replace('\\', Storage.SeparatorChar); 
-                if (string.IsNullOrEmpty(itemPart)) 
-                    continue; //no item part means it posint to current storage
-
-                // add file in current path
-                if (entryFolder == _path && entry.Name!="") // if entry.Name is empty it means it is empty folder not a file
+                var ret = new List<StorageEntryBase>();
+                var folders = new Dictionary<string, ZipArchiveEntry>();
+                foreach (var entry in _zipArchive.Entries)
                 {
-                    ret.Add(StorageProviderEntryFromZipEntry(entry));
+                    var entryFolder = GetEntryFolderName(entry.FullName, out string fullName);
+                    if (entryFolder.IndexOf(_path) != 0)
+                        continue; //not exists in current folder
+
+                    // find item part
+                    // if current folder is "/folder1/sub1/aa.txt" then itemPart is "sub1/aa.txt"
+                    var itemPart = fullName.Substring(_path.Length).Replace('\\', Storage.SeparatorChar);
+                    if (string.IsNullOrEmpty(itemPart))
+                        continue; //no item part means it posint to current storage
+
+                    // add file in current path
+                    if (entryFolder == _path && entry.Name != "") // if entry.Name is empty it means it is empty folder not a file
+                    {
+                        ret.Add(StorageProviderEntryFromZipEntry(entry));
+                    }
+                    // add folder in current path 
+                    else
+                    {
+                        var nextSeparatorIndex = itemPart.IndexOf(Storage.SeparatorChar);
+                        if (nextSeparatorIndex == -1) nextSeparatorIndex = itemPart.Length;
+                        var folderName = itemPart.Substring(0, nextSeparatorIndex);
+                        if (!folders.TryGetValue(folderName, out ZipArchiveEntry lastEntry) || lastEntry.LastWriteTime < entry.LastWriteTime)
+                            folders[folderName] = entry;
+                    }
                 }
-                // add folder in current path 
-                else
+
+                // add folders
+                foreach (var folder in folders)
                 {
-                    var nextSeparatorIndex = itemPart.IndexOf(Storage.SeparatorChar);
-                    if (nextSeparatorIndex == -1) nextSeparatorIndex = itemPart.Length;
-                    var folderName = itemPart.Substring(0, nextSeparatorIndex);
-                    if (!folders.TryGetValue(folderName, out ZipArchiveEntry lastEntry) || lastEntry.LastWriteTime < entry.LastWriteTime)
-                        folders[folderName] = entry;
+                    ret.Add(new StorageEntryBase()
+                    {
+                        Attributes = 0,
+                        IsStorage = true,
+                        LastWriteTime = folder.Value.LastWriteTime.DateTime,
+                        Size = 0,
+                        Name = folder.Key,
+                        Uri = PathToUri(PathUtil.AddLastSeparator(Path.Combine(_path, folder.Key)))
+                    });
                 }
-            }
 
-            // add folders
-            foreach (var folder in folders)
-            {
-                ret.Add(new StorageEntryBase()
-                {
-                    Attributes = 0,
-                    IsStorage = true,
-                    LastWriteTime = folder.Value.LastWriteTime.DateTime,
-                    Size = 0,
-                    Name = folder.Key,
-                    Uri = PathToUri(PathUtil.AddLastSeparator(Path.Combine(_path, folder.Key)))
-                });
+                return ret.ToArray();
             }
-
-            return ret.ToArray();
         }
 
         public Stream OpenStream(Uri uri, StreamMode mode, StreamAccess access, StreamShare share, int bufferSize)
         {
-            if (mode != StreamMode.Open)
-                throw new NotSupportedException($"ZipStorgeProvider does not support mode: {mode}");
+                if (mode != StreamMode.Open)
+                    throw new NotSupportedException($"ZipStorgeProvider does not support mode: {mode}");
 
-            var path = PathFromUri(uri);
-            return _zipArchive.GetEntry(path).Open();
+            lock (_zipArchive)
+            {
+                var path = PathFromUri(uri);
+                return _zipArchive.GetEntry(path).Open();
+            }
         }
 
 
