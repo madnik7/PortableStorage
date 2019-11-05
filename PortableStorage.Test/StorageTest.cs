@@ -150,6 +150,31 @@ namespace PortableStorage.Test
 
         }
 
+
+        [TestMethod]
+        public void BufferedStream_GoToEnd()
+        {
+            using var fs = File.Open(@"D:\Users\Robert\Desktop\New folder\a.txt", FileMode.Truncate, FileAccess.ReadWrite);
+            using var bs = new BufferedStream(fs, 5);
+
+            var t = new byte[255];
+            for (var i = 0; i < t.Length; i++)
+                t[i] = (byte)i;
+
+            var buf = System.Text.Encoding.UTF8.GetBytes("0123456789");
+
+            bs.Write(buf, 0, buf.Length);
+            bs.Seek(0, SeekOrigin.End);
+            bs.Write(buf, 0, buf.Length);
+
+            //bs.Seek(0, SeekOrigin.Begin);
+            //Assert.AreEqual(bs.ReadByte(), 0);
+
+            //bs.Seek(0, SeekOrigin.End);
+            //var a = bs.ReadByte();
+        }
+
+
         [TestMethod]
         public void CopyTo()
         {
@@ -193,7 +218,8 @@ namespace PortableStorage.Test
         [ClassCleanup]
         public static void ClassCleanup()
         {
-            Directory.Delete(TempPath, true);
+            if (Directory.Exists(TempPath))
+                Directory.Delete(TempPath, true);
         }
     }
 }

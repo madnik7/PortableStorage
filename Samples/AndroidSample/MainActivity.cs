@@ -6,6 +6,7 @@ using Android.Widget;
 using PortableStorage.Droid;
 using System;
 using System.IO;
+using System.Text;
 
 namespace AndroidSample
 {
@@ -142,18 +143,18 @@ namespace AndroidSample
                 using (var storage = SafStorgeProvider.CreateStorage(this, StorageUri))
                 using (var testStorage = storage.CreateStorage("_PortableStorage.Test"))
                 {
-                    testStorage.WriteAllText(filename, sampleText);
-                    var res = testStorage.ReadAllText(filename);
-                    if (res == sampleText)
+                    using (var stream = testStorage.CreateStream("aa.txt", PortableStorage.StreamShare.ReadWrite, true))
                     {
-                        infoView.Text = "Info: The content has been written and readed successfully :)\n\r";
-                        infoView.Text += "Now you have a access to the storage even after reloading the App.";
+                        var buf = Encoding.UTF8.GetBytes("12345678011_");
+                        for (var i = 0; i < 1000; i++)
+                        {
+                            stream.Seek(0, SeekOrigin.End);
+                            stream.Write(buf, 0, buf.Length);
+                        }
                     }
-                    else
-                    {
-                        throw new Exception("The sample file content couldn't be readed properly!");
-                    }
+
                 }
+
             }
             catch (Exception ex)
             {
