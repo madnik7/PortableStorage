@@ -6,20 +6,18 @@ namespace PortableStorage
     //add the time writing this class; standard BufferedStream was too slow
     public class BufferedStream : Stream
     {
-        private readonly Stream _stream;
+        private Stream _stream;
         private readonly int _bufferSize;
-        private readonly bool _autoDisposeStream;
         private readonly byte[] _buf;
         private long _bufOffset = 0;
         private int _bufPos = 0;
         private int _bufUsed = 0;
         private bool _isDirty = false;
 
-        public BufferedStream(Stream stream, int bufferSize, bool autoDisposeStream = true)
+        public BufferedStream(Stream stream, int bufferSize)
         {
             _stream = stream;
             _bufferSize = bufferSize;
-            _autoDisposeStream = autoDisposeStream;
             _buf = new byte[bufferSize];
         }
 
@@ -125,10 +123,10 @@ namespace PortableStorage
             else if (origin == SeekOrigin.End) pos = Length + offset;
 
             //check is within buffer range
-            if (pos >= _bufOffset && pos < _bufOffset + _bufferSize)
+            if (pos >= _bufOffset && pos < _bufOffset + _bufUsed)
             {
                 _bufPos = (int)(pos - _bufOffset);
-                return pos;
+                return _bufPos;
             }
             else
             {
@@ -141,15 +139,9 @@ namespace PortableStorage
 
         protected override void Dispose(bool disposing)
         {
-            // flush buffer
-            FlushDirty();
-
-            //dispose base
+            if (disposing)
+                FlushDirty();
             base.Dispose(disposing);
-
-            // dispose undelying stream
-            if (_autoDisposeStream)
-                _stream.Dispose();
         }
 
         public override void SetLength(long value)
