@@ -6,18 +6,20 @@ namespace PortableStorage
     //add the time writing this class; standard BufferedStream was too slow
     public class BufferedStream : Stream
     {
-        private Stream _stream;
+        private readonly Stream _stream;
         private readonly int _bufferSize;
+        private readonly bool _autoDisposeStream;
         private readonly byte[] _buf;
         private long _bufOffset = 0;
         private int _bufPos = 0;
         private int _bufUsed = 0;
         private bool _isDirty = false;
 
-        public BufferedStream(Stream stream, int bufferSize)
+        public BufferedStream(Stream stream, int bufferSize, bool autoDisposeStream = true)
         {
             _stream = stream;
             _bufferSize = bufferSize;
+            _autoDisposeStream = autoDisposeStream;
             _buf = new byte[bufferSize];
         }
 
@@ -29,7 +31,7 @@ namespace PortableStorage
         {
             get
             {
-                var byBuf = _stream.Position - _bufOffset + _bufUsed;
+                var byBuf = _bufOffset + _bufUsed;
                 return Math.Max(_stream.Length, byBuf);
             }
         }
@@ -77,14 +79,20 @@ namespace PortableStorage
             if (remain >= _bufferSize)
             {
                 FlushDirty();
-                _bufOffset = _stream.Position;
-                return _stream.Read(buffer, offset, remain) + bufReadCount;
+                var ret =  _stream.Read(buffer, offset, remain) + bufReadCount;
+
+                // fill buffer
+                _bufOffset = _stream.Position - _bufferSize;
+                _bufUsed = _bufferSize;
+                _bufPos = _bufferSize;
+                Buffer.BlockCopy(buffer, offset, _buf, 0, _bufferSize);
+                return ret;
             }
             else if (remain > 0)
             {
                 FlushDirty();
                 _bufOffset = _stream.Position;
-                _bufUsed = _stream.Read(_buf, 0, _bufferSize);
+                _bufUsed = _stream.Read(_buf, 0, _bufferSize); //seek
                 if (_bufUsed > 0)
                     return Read(buffer, offset, remain) + bufReadCount;
             }
@@ -123,10 +131,11 @@ namespace PortableStorage
             else if (origin == SeekOrigin.End) pos = Length + offset;
 
             //check is within buffer range
-            if (pos >= _bufOffset && pos < _bufOffset + _bufUsed)
+            if (pos >= _bufOffset && pos < _bufOffset + _bufferSize)
             {
                 _bufPos = (int)(pos - _bufOffset);
-                return _bufPos;
+                _bufUsed = Math.Max(_bufUsed, _bufPos);
+                return pos;
             }
             else
             {
@@ -139,9 +148,15 @@ namespace PortableStorage
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing)
-                FlushDirty();
+            // flush buffer
+            FlushDirty();
+
+            //dispose base
             base.Dispose(disposing);
+
+            // dispose undelying stream
+            if (_autoDisposeStream)
+                _stream.Dispose();
         }
 
         public override void SetLength(long value)
