@@ -54,17 +54,20 @@ namespace PortableStorage
         private bool _disposedValue = false; // To detect redundant calls
         protected virtual void Dispose(bool disposing)
         {
-            if (_disposedValue)
-                return;
-
-            if (disposing)
+            lock (_lockObject)
             {
-                // dispose managed state (managed objects).
-                foreach (var item in _internalObjects)
-                    if (item.Value.TryGetTarget(out IDisposable target))
-                        target?.Dispose();
-                _provider.Dispose();
-                _disposedValue = true;
+                if (_disposedValue)
+                    return;
+
+                if (disposing)
+                {
+                    // dispose managed state (managed objects).
+                    foreach (var item in _internalObjects)
+                        if (item.Value.TryGetTarget(out IDisposable target))
+                            target?.Dispose();
+                    _provider.Dispose();
+                    _disposedValue = true;
+                }
             }
 
             // free unmanaged resources (unmanaged objects) and override a finalizer below.
@@ -87,9 +90,12 @@ namespace PortableStorage
         {
             get
             {
-                if (_name == null)
-                    _name = _provider.Name; // cache the name, it might be so slow
-                return _name;
+                lock (_lockObject)
+                {
+                    if (_name == null)
+                        _name = _provider.Name; // cache the name, it might be so slow
+                    return _name;
+                }
             }
         }
 
@@ -205,10 +211,7 @@ namespace PortableStorage
             //cache the result when all item is returned
             if (pattern == null)
             {
-                lock (_lockObject)
-                {
-                    _lastCacheTime = DateTime.Now;
-                }
+                _lastCacheTime = DateTime.Now;
 
                 //apply searchPattern
                 if (searchPattern != null)
@@ -248,32 +251,33 @@ namespace PortableStorage
             }
 
             // open storage and add it to cache
-            var storageEntry = GetStorageEntry(name);
-            var uri = storageEntry.Uri;
-            try
+            lock (_lockObject)
             {
-                IStorageProvider storageProvider;
-                if (storageEntry.IsVirtualStorage && VirtualStorageProviders.TryGetValue(System.IO.Path.GetExtension(name), out IVirtualStorageProvider virtualStorageProvider))
+                var storageEntry = GetStorageEntry(name);
+                var uri = storageEntry.Uri;
+                try
                 {
-                    var stream = OpenStreamRead(name);
-                    _internalObjects.TryAdd(name, new WeakReference<IDisposable>(stream));
+                    IStorageProvider storageProvider;
+                    if (storageEntry.IsVirtualStorage && VirtualStorageProviders.TryGetValue(System.IO.Path.GetExtension(name), out IVirtualStorageProvider virtualStorageProvider))
+                    {
+                        var stream = OpenStreamRead(name);
+                        _internalObjects.TryAdd(name, new WeakReference<IDisposable>(stream));
+                        storageProvider = virtualStorageProvider.CreateStorageProvider(stream, storageEntry.Uri, name);
+                    }
+                    else
+                    {
+                        storageProvider = _provider.OpenStorage(uri);
+                    }
 
-                    storageProvider = virtualStorageProvider.CreateStorageProvider(stream, storageEntry.Uri, name);
+                    var newStorage = new Storage(storageProvider, this);
+                    AddToCache(name, newStorage);
+                    return newStorage;
                 }
-                else
+                catch (StorageNotFoundException)
                 {
-                    storageProvider = _provider.OpenStorage(uri);
+                    ClearCache();
+                    throw;
                 }
-
-
-                var newStorage = new Storage(storageProvider, this);
-                AddToCache(name, newStorage);
-                return newStorage;
-            }
-            catch (StorageNotFoundException)
-            {
-                ClearCache();
-                throw;
             }
         }
 

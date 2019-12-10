@@ -6,11 +6,13 @@ namespace PortableStorage
     public class SyncStream : Stream
     {
         private readonly Stream _stream;
+        private readonly object _lockObject;
         private long _position;
 
         public SyncStream(Stream stream, bool keepCurrentPosition = false)
         {
             _stream = stream ?? throw new ArgumentNullException("stream");
+            _lockObject = _stream;
             _position = keepCurrentPosition ? _stream.Position : 0;
         }
 
@@ -21,19 +23,19 @@ namespace PortableStorage
         {
             get
             {
-                lock (_stream)
+                lock (_lockObject)
                     return _stream.Length;
             }
         }
 
         public override void Flush()
         {
-            lock (_stream)
+            lock (_lockObject)
                 _stream.Flush();
         }
         public override void SetLength(long value)
         {
-            lock (_stream)
+            lock (_lockObject)
                 _stream.SetLength(value);
         }
 
@@ -41,12 +43,12 @@ namespace PortableStorage
         {
             get
             {
-                lock (_stream)
+                lock (_lockObject)
                     return _position;
             }
             set
             {
-                lock (_stream)
+                lock (_lockObject)
                 {
                     if (_position == value)
                         return;
@@ -63,7 +65,7 @@ namespace PortableStorage
 
         public override long Seek(long offset, SeekOrigin origin)
         {
-            lock (_stream)
+            lock (_lockObject)
             {
                 long newPosition;
                 switch (origin)
@@ -99,22 +101,22 @@ namespace PortableStorage
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            lock (_stream)
+            lock (_lockObject)
             {
                 _stream.Position = _position;
                 var ret = _stream.Read(buffer, offset, count);
-                _position += ret;
+                _position = _stream.Position;
                 return ret;
             }
         }
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            lock (_stream)
+            lock (_lockObject)
             {
                 _stream.Position = _position;
                 _stream.Write(buffer, offset, count);
-                _position += count;
+                _position = _stream.Position;
             }
         }
     }

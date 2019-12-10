@@ -41,8 +41,8 @@ namespace PortableStorage.Providers
 
         public ZipStorgeProvider(Stream stream, Uri streamUri = null, string streamName = null)
         {
-            var syncStream = new SyncStream(stream);
-            _zipArchive = new ZipArchive(syncStream);
+            //var syncStream = new SyncStream(stream);
+            _zipArchive = new ZipArchive(stream);
             _streamUri = streamUri;
             _name = streamName;
         }
@@ -162,13 +162,14 @@ namespace PortableStorage.Providers
 
         public Stream OpenStream(Uri uri, StreamMode mode, StreamAccess access, StreamShare share, int bufferSize)
         {
-                if (mode != StreamMode.Open)
-                    throw new NotSupportedException($"ZipStorgeProvider does not support mode: {mode}");
+            if (mode != StreamMode.Open)
+                throw new NotSupportedException($"ZipStorgeProvider does not support mode: {mode}");
 
             lock (_zipArchive)
             {
                 var path = PathFromUri(uri);
-                return _zipArchive.GetEntry(path).Open();
+                var stream = _zipArchive.GetEntry(path).Open();
+                return stream;
             }
         }
 
