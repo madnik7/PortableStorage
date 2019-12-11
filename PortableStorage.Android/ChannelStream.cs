@@ -91,24 +91,22 @@ namespace PortableStorage.Droid
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            using (var buf = ByteBuffer.Allocate(count))
+            using var buf = ByteBuffer.Allocate(count);
+            var res = Channel.Read(buf);
+            buf.Position(0);
+
+            if (buffer.Length == count && offset == 0)
+                buf.Get(buffer);
+            else
             {
-                var res = Channel.Read(buf);
-                buf.Position(0);
-
-                if (buffer.Length == count && offset == 0)
-                    buf.Get(buffer);
-                else
-                {
-                    var newBuf = new byte[count];
-                    buf.Get(newBuf);
-                    Array.Copy(newBuf, 0, buffer, offset, count);
-                }
-
-
-                if (res == -1) return 0;
-                return res;
+                var newBuf = new byte[count];
+                buf.Get(newBuf);
+                Array.Copy(newBuf, 0, buffer, offset, count);
             }
+
+
+            if (res == -1) return 0;
+            return res;
         }
 
         public override void Write(byte[] buffer, int offset, int count)
@@ -120,10 +118,8 @@ namespace PortableStorage.Droid
                 Array.Copy(buffer, offset, newBuf, 0, count);
             }
 
-            using (var buf = ByteBuffer.Wrap(newBuf))
-            {
-                var res = Channel.Write(buf);
-            }
+            using var buf = ByteBuffer.Wrap(newBuf);
+            var res = Channel.Write(buf);
         }
 
     }
