@@ -23,6 +23,7 @@ namespace PortableStorage
         public Storage Parent { get; }
         public IDictionary<string, IVirtualStorageProvider> VirtualStorageProviders { get; }
         public bool IgnoreCase { get; }
+        public Type ProviderType => _provider.GetType();
 
         private readonly IStorageProvider _provider;
         private readonly int _cacheTimeoutFiled;
@@ -258,7 +259,8 @@ namespace PortableStorage
                 try
                 {
                     IStorageProvider storageProvider;
-                    if (storageEntry.IsVirtualStorage && VirtualStorageProviders.TryGetValue(System.IO.Path.GetExtension(name), out IVirtualStorageProvider virtualStorageProvider))
+                    if (storageEntry.IsVirtualStorage && 
+                        VirtualStorageProviders.TryGetValue(System.IO.Path.GetExtension(name), out IVirtualStorageProvider virtualStorageProvider))
                     {
                         var stream = OpenStreamRead(name);
                         _internalObjects.TryAdd(name, new WeakReference<IDisposable>(stream));
