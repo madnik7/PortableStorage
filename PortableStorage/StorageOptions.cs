@@ -14,7 +14,7 @@ namespace PortableStorage
         public IDictionary<string, IVirtualStorageProvider> VirtualStorageProviders { get; } = new Dictionary<string, IVirtualStorageProvider>(StringComparer.InvariantCultureIgnoreCase);
         public int CacheTimeout { get; set; } = -1;
         public bool IgnoreCase { get; set; } = true;
-        public bool leaveProviderOpen { get; set; } = false;
+        public bool LeaveProviderOpen { get; set; } = false;
     }
 
 }

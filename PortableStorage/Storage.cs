@@ -35,7 +35,7 @@ namespace PortableStorage
             _cacheTimeoutFiled = options.CacheTimeout == -1 ? 1000 : options.CacheTimeout;
             VirtualStorageProviders = options.VirtualStorageProviders;
             IgnoreCase = options.IgnoreCase;
-            _leaveProviderOpen = options.leaveProviderOpen;
+            _leaveProviderOpen = options.LeaveProviderOpen;
         }
 
         private Storage(IStorageProvider provider, Storage parent, bool leaveProviderOpen)
