@@ -10,14 +10,8 @@ using PortableStorage.Providers;
 
 namespace PortableStorage
 {
-    public class Storage : IDisposable
+    public class Storage
     {
-        private class StorageCache
-        {
-            public readonly DateTime cacheTime = DateTime.Now;
-            public Storage storage;
-        }
-
         public static readonly char SeparatorChar = '/';
         public int CacheTimeout => Parent?.CacheTimeout ?? _cacheTimeoutFiled;
         public Storage Parent { get; }
@@ -26,13 +20,13 @@ namespace PortableStorage
         public Type ProviderType => _provider.GetType();
 
         private readonly IStorageProvider _provider;
+        private readonly bool _leaveProviderOpen;
         private readonly int _cacheTimeoutFiled;
         private DateTime _lastCacheTime = DateTime.MinValue;
-        private readonly ConcurrentDictionary<string, StorageCache> _storageCache = new ConcurrentDictionary<string, StorageCache>();
+        private readonly ConcurrentDictionary<string, Storage> _storageCache = new ConcurrentDictionary<string, Storage>();
         private readonly ConcurrentDictionary<string, StorageEntry> _entryCache = new ConcurrentDictionary<string, StorageEntry>();
         private readonly object _lockObject = new object();
         private string _name;
-        private readonly ConcurrentDictionary<string, WeakReference<IDisposable>> _internalObjects = new ConcurrentDictionary<string, WeakReference<IDisposable>>();
 
         public Storage(IStorageProvider provider, StorageOptions options)
         {
@@ -41,47 +35,17 @@ namespace PortableStorage
             _cacheTimeoutFiled = options.CacheTimeout == -1 ? 1000 : options.CacheTimeout;
             VirtualStorageProviders = options.VirtualStorageProviders;
             IgnoreCase = options.IgnoreCase;
+            _leaveProviderOpen = options.leaveProviderOpen;
         }
 
-        private Storage(IStorageProvider provider, Storage parent)
+        private Storage(IStorageProvider provider, Storage parent, bool leaveProviderOpen)
         {
             _provider = provider ?? throw new ArgumentNullException("provider");
+            _leaveProviderOpen = leaveProviderOpen;
             Parent = parent ?? throw new ArgumentNullException("parent");
             IgnoreCase = parent.IgnoreCase;
             VirtualStorageProviders = parent.VirtualStorageProviders;
         }
-
-        #region IDisposable Support
-        private bool _disposedValue = false; // To detect redundant calls
-        protected virtual void Dispose(bool disposing)
-        {
-            lock (_lockObject)
-            {
-                if (_disposedValue)
-                    return;
-
-                if (disposing)
-                {
-                    // dispose managed state (managed objects).
-                    foreach (var item in _internalObjects)
-                        if (item.Value.TryGetTarget(out IDisposable target))
-                            target?.Dispose();
-                    _provider.Dispose();
-                    _disposedValue = true;
-                }
-            }
-
-            // free unmanaged resources (unmanaged objects) and override a finalizer below.
-            // set large fields to null.
-        }
-
-        // This code added to correctly implement the disposable pattern.
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-            Dispose(true);
-        }
-        #endregion
 
         public string Path => (Parent == null) ? SeparatorChar.ToString() : PathCombine(Parent.Path, Name);
         public bool IsRoot => Parent == null;
@@ -226,11 +190,16 @@ namespace PortableStorage
             return entries;
         }
 
-        public void ClearCache()
+        public void ClearCache(bool recursive = false)
         {
             lock (_lockObject)
             {
-                _storageCache.Clear();
+                if (recursive)
+                {
+                    foreach (var item in _storageCache)
+                        item.Value.ClearCache(recursive);
+                }
+
                 _entryCache.Clear();
                 _lastCacheTime = DateTime.MinValue;
             }
@@ -244,12 +213,9 @@ namespace PortableStorage
                 return storage.OpenStorage(name);
 
             //use storage cache
-            if (_storageCache.TryGetValue(name, out StorageCache storageCache))
-            {
-                if (storageCache.cacheTime.AddSeconds(CacheTimeout) > DateTime.Now)
-                    return storageCache.storage;
-                _storageCache.TryRemove(name, out _);
-            }
+            var storageFromCache = StorageCache_Get(name);
+            if (storageFromCache != null)
+                return storageFromCache;
 
             // open storage and add it to cache
             lock (_lockObject)
@@ -258,21 +224,21 @@ namespace PortableStorage
                 var uri = storageEntry.Uri;
                 try
                 {
-                    IStorageProvider storageProvider;
-                    if (storageEntry.IsVirtualStorage && 
+                    Storage newStorage;
+                    if (storageEntry.IsVirtualStorage &&
                         VirtualStorageProviders.TryGetValue(System.IO.Path.GetExtension(name), out IVirtualStorageProvider virtualStorageProvider))
                     {
                         var stream = OpenStreamRead(name);
-                        _internalObjects.TryAdd(name, new WeakReference<IDisposable>(stream));
-                        storageProvider = virtualStorageProvider.CreateStorageProvider(stream, storageEntry.Uri, name);
+                        var storageProvider = virtualStorageProvider.CreateStorageProvider(stream, storageEntry.Uri, name);
+                        newStorage = new Storage(storageProvider, this, false);
                     }
                     else
                     {
-                        storageProvider = _provider.OpenStorage(uri);
+                        var storageProvider = _provider.OpenStorage(uri);
+                        newStorage = new Storage(storageProvider, this, true);
                     }
 
-                    var newStorage = new Storage(storageProvider, this);
-                    AddToCache(name, newStorage);
+                    StorageCache_Add(name, newStorage);
                     return newStorage;
                 }
                 catch (StorageNotFoundException)
@@ -305,17 +271,41 @@ namespace PortableStorage
 
             var result = _provider.CreateStorage(name);
             var entry = ProviderEntryToEntry(result.Entry);
-            var newStorage = new Storage(result.Storage, this);
+            var newStorage = new Storage(result.Storage, this, true);
 
-            AddToCache(name, newStorage);
+            StorageCache_Add(name, newStorage);
             AddToCache(entry);
             return newStorage;
         }
 
-        private void AddToCache(string name, Storage storage)
+        private void StorageCache_Add(string name, Storage storage)
         {
-            _storageCache.TryAdd(name, new StorageCache() { storage = storage });
-            _internalObjects.TryAdd(name, new WeakReference<IDisposable>(storage));
+            lock (_lockObject)
+            {
+                StorageCache_Remove(name);
+                _storageCache.TryAdd(name, storage);
+            }
+        }
+
+        private void StorageCache_Remove(string name)
+        {
+            if (_storageCache.TryRemove(name, out Storage storage))
+                storage.Close();
+        }
+
+        private Storage StorageCache_Get(string name)
+        {
+            lock (_lockObject)
+            {
+                if (_storageCache.TryGetValue(name, out Storage storage))
+                {
+                    if (!storage._disposedValue)
+                        return storage;
+                     
+                    _storageCache.TryRemove(name, out _);
+                }
+            }
+            return null;
         }
 
         private void AddToCache(StorageEntry entry)
@@ -326,50 +316,37 @@ namespace PortableStorage
 
         public void RemoveStream(string path)
         {
-            // manage path
-            var storage = GetStorageForPath(path, out string name);
-            if (storage != null)
-            {
-                storage.RemoveStream(name);
-                return;
-            }
-
-            // release virtual map stream if opened
-            ReleaseInternalObject(name);
-
-            //
-            var uri = GetStreamEntry(name).Uri;
-            _provider.RemoveStream(uri);
-
-            //update cache
-            _entryCache.TryRemove(name, out _);
+            Delete(path, false);
         }
 
         public void RemoveStorage(string path)
         {
+            Delete(path, true);
+        }
+
+        private void Delete(string path, bool isStorage)
+        {
             // manage path
             var storage = GetStorageForPath(path, out string name);
             if (storage != null)
             {
-                storage.RemoveStorage(name);
+                storage.Delete(name, isStorage);
                 return;
             }
 
-            ReleaseInternalObject(name);
-
-            // rename physically
-            var uri = GetStorageEntry(name).Uri;
-            _provider.RemoveStorage(uri);
+            // get the entry
+            var entry = isStorage ? GetStorageEntry(name) : GetStreamEntry(name);
 
             //update cache
-            _storageCache.TryRemove(name, out _);
+            StorageCache_Remove(name);
             _entryCache.TryRemove(name, out _);
-        }
 
-        private void ReleaseInternalObject(string name)
-        {
-            if (_internalObjects.TryGetValue(name, out WeakReference<IDisposable> obj) && obj.TryGetTarget(out IDisposable target))
-                target?.Dispose();
+            // remove physically after disposing objects
+            if (isStorage) 
+                _provider.RemoveStorage(entry.Uri);
+            else
+                _provider.RemoveStream(entry.Uri);
+
         }
 
         public void Rename(string path, string desName)
@@ -382,21 +359,16 @@ namespace PortableStorage
                 return;
             }
 
-            // release virtual map stream if opened
-            ReleaseInternalObject(name);
-
             // rename physically
             var entry = GetEntry(name);
-            var newUri = _provider.Rename(entry.Uri, desName);
+
+            //As storage.uri will be change the descendant may change too which can not be cached
+            StorageCache_Remove(name);
 
             // update the cache
             lock (_lockObject)
             {
-                if (_storageCache.TryRemove(name, out StorageCache storageCache))
-                {
-                    _storageCache.Clear(); //As storage.uri will be change the descendant may change too which can not be cached
-                }
-
+                var newUri = _provider.Rename(entry.Uri, desName);
                 if (_entryCache.TryRemove(name, out StorageEntry storageEntry))
                 {
                     entry.Name = desName;
@@ -651,6 +623,25 @@ namespace PortableStorage
                               .Replace(@"\*", ".*")
                               .Replace(@"\?", ".")
                        + "$";
+        }
+
+        private bool _disposedValue = false; // To detect redundant calls
+        public void Close()
+        {
+            lock (_lockObject)
+            {
+                if (_disposedValue)
+                    return;
+
+                //close all substorage
+                foreach (var storage in _storageCache)
+                    storage.Value.Close();
+
+                //close provider
+                if (!_leaveProviderOpen)
+                    _provider.Dispose();
+                _disposedValue = true;
+            }
         }
 
         private StorageEntry[] StorageEntryFromStorageEntryProvider(StorageEntryBase[] storageProviderEntry)

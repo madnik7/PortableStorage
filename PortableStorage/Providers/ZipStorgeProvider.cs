@@ -14,17 +14,17 @@ namespace PortableStorage.Providers
         public bool IsGetEntriesBySearchPatternFast => false;
         public bool IsGetEntryUriByNameFast => true;
 
-        public static Storage CreateStorage(string zipPath, StorageOptions storageOptions = null)
+        public static StorageRoot CreateStorage(string zipPath, StorageOptions storageOptions = null)
         {
             var provider = new ZipStorgeProvider(zipPath);
-            var ret = new Storage(provider, storageOptions);
+            var ret = new StorageRoot(provider, storageOptions);
             return ret;
         }
 
-        public static Storage CreateStorage(Stream stream, Uri streamUri = null, string streamName = null, StorageOptions storageOptions = null)
+        public static StorageRoot CreateStorage(Stream stream, Uri streamUri = null, string streamName = null, StorageOptions storageOptions = null)
         {
             var provider = new ZipStorgeProvider(stream, streamUri, streamName);
-            var ret = new Storage(provider, storageOptions);
+            var ret = new StorageRoot(provider, storageOptions);
             return ret;
         }
 
@@ -39,10 +39,10 @@ namespace PortableStorage.Providers
 
         }
 
-        public ZipStorgeProvider(Stream stream, Uri streamUri = null, string streamName = null)
+        public ZipStorgeProvider(Stream stream, Uri streamUri = null, string streamName = null, bool leaveStreamOpen = false)
         {
             //var syncStream = new SyncStream(stream);
-            _zipArchive = new ZipArchive(stream);
+            _zipArchive = new ZipArchive(stream, ZipArchiveMode.Read, leaveStreamOpen);
             _streamUri = streamUri;
             _name = streamName;
         }
@@ -207,6 +207,7 @@ namespace PortableStorage.Providers
 
         public void Dispose()
         {
+            _zipArchive.Dispose();
         }
     }
 }

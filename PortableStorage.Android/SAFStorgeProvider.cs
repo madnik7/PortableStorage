@@ -19,15 +19,15 @@ namespace PortableStorage.Droid
         public bool IsGetEntryUriByNameFast => false;
         private string _name;
 
-        public static Storage CreateStorage(Context context, Uri uri, StorageOptions storageOptions = null)
+        public static StorageRoot CreateStorage(Context context, Uri uri, StorageOptions storageOptions = null)
         {
             return CreateStorage(context, AndroidUriFromUri(uri), storageOptions);
         }
 
-        public static Storage CreateStorage(Context context, Android.Net.Uri androidUri, StorageOptions storageOptions = null)
+        public static StorageRoot CreateStorage(Context context, Android.Net.Uri androidUri, StorageOptions storageOptions = null)
         {
             var provider = new SafStorgeProvider(context, androidUri);
-            return new Storage(provider, storageOptions);
+            return new StorageRoot(provider, storageOptions);
         }
 
         public SafStorgeProvider(Context context, Uri uri)
@@ -124,11 +124,9 @@ namespace PortableStorage.Droid
 
         public long GetFreeSpace()
         {
-            using (var fd = Context.ContentResolver.OpenFileDescriptor(AndroidUri, "r"))
-            {
-                var stat = Android.Systems.Os.Fstatvfs(fd.FileDescriptor);
-                return stat.FBavail * stat.FBsize;
-            }
+            using var fd = Context.ContentResolver.OpenFileDescriptor(AndroidUri, "r");
+            var stat = Android.Systems.Os.Fstatvfs(fd.FileDescriptor);
+            return stat.FBavail * stat.FBsize;
         }
 
         public Uri Rename(Uri uri, string desName)

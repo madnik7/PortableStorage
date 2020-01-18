@@ -12,10 +12,10 @@ namespace PortableStorage.Providers
         public bool IsGetEntriesBySearchPatternFast => true;
         public bool IsGetEntryUriByNameFast => true;
 
-        public static Storage CreateStorage(string path, bool createIfNotExists, StorageOptions storageOptions = null)
+        public static StorageRoot CreateStorage(string path, bool createIfNotExists, StorageOptions storageOptions = null)
         {
             var provider = new FileStorgeProvider(path, createIfNotExists);
-            var ret = new Storage(provider, storageOptions);
+            var ret = new StorageRoot(provider, storageOptions);
             return ret;
         }
 
@@ -117,7 +117,7 @@ namespace PortableStorage.Providers
             return OpenStream(filePath, fmode, access, share, bufferSize);
         }
 
-        private Stream OpenStream(string filePath, FileMode fmode, StreamAccess access, StreamShare share, int bufferSize)
+        private Stream OpenStream(string filePath, FileMode fmode, StreamAccess access, StreamShare share, int _)
         {
             var faccess = FileAccess.Read;
             switch (access)

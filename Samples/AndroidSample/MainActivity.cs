@@ -106,22 +106,19 @@ namespace AndroidSample
         {
             try
             {
-                using (var assetStream = Assets.Open("Test.zip"))
-                using (var zipStream = new MemoryStream())
+                using var assetStream = Assets.Open("Test.zip");
+                using var zipStream = new MemoryStream();
+                assetStream.CopyTo(zipStream); //just make it seekable. it doesn't need if it is openned from file
+                
+                using var zipStorage = PortableStorage.Providers.ZipStorgeProvider.CreateStorage(zipStream);
+                var text = zipStorage.ReadAllText("Folder1/File1.txt");
+                if (text == "File1 Text.")
                 {
-                    assetStream.CopyTo(zipStream); //just make it seekable. it doesn't need if it is openned from file
-                    using (var zipStorage = PortableStorage.Providers.ZipStorgeProvider.CreateStorage(zipStream))
-                    {
-                        var text = zipStorage.ReadAllText("Folder1/File1.txt");
-                        if (text == "File1 Text.")
-                        {
-                            infoView.Text = "Info: The zip content has been readed successfully :)\n\r";
-                        }
-                        else
-                        {
-                            throw new Exception("The sample file content couldn't be readed properly!");
-                        }
-                    }
+                    infoView.Text = "Info: The zip content has been readed successfully :)\n\r";
+                }
+                else
+                {
+                    throw new Exception("The sample file content couldn't be readed properly!");
                 }
             }
             catch (Exception ex)
@@ -139,20 +136,18 @@ namespace AndroidSample
 
                 var filename = "test.txt";
                 var sampleText = "Sample Text";
-                using (var storage = SafStorgeProvider.CreateStorage(this, StorageUri))
-                using (var testStorage = storage.CreateStorage("_PortableStorage.Test"))
+                using var storage = SafStorgeProvider.CreateStorage(this, StorageUri);
+                var testStorage = storage.CreateStorage("_PortableStorage.Test");
+                testStorage.WriteAllText(filename, sampleText);
+                var res = testStorage.ReadAllText(filename);
+                if (res == sampleText)
                 {
-                    testStorage.WriteAllText(filename, sampleText);
-                    var res = testStorage.ReadAllText(filename);
-                    if (res == sampleText)
-                    {
-                        infoView.Text = "Info: The content has been written and readed successfully :)\n\r";
-                        infoView.Text += "Now you have a access to the storage even after reloading the App.";
-                    }
-                    else
-                    {
-                        throw new Exception("The sample file content couldn't be readed properly!");
-                    }
+                    infoView.Text = "Info: The content has been written and readed successfully :)\n\r";
+                    infoView.Text += "Now you have a access to the storage even after reloading the App.";
+                }
+                else
+                {
+                    throw new Exception("The sample file content couldn't be readed properly!");
                 }
             }
             catch (Exception ex)
