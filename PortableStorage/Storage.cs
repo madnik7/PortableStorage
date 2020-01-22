@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using PortableStorage.Providers;
+using System.Collections.ObjectModel;
 
 namespace PortableStorage
 {
@@ -15,7 +16,7 @@ namespace PortableStorage
         public static readonly char SeparatorChar = '/';
         public int CacheTimeout => Parent?.CacheTimeout ?? _cacheTimeoutFiled;
         public Storage Parent { get; }
-        public IDictionary<string, IVirtualStorageProvider> VirtualStorageProviders { get; }
+        
         public bool IgnoreCase { get; }
         public Type ProviderType => _provider.GetType();
 
@@ -33,7 +34,7 @@ namespace PortableStorage
             options = options ?? new StorageOptions();
             _provider = provider ?? throw new ArgumentNullException("provider");
             _cacheTimeoutFiled = options.CacheTimeout == -1 ? 1000 : options.CacheTimeout;
-            VirtualStorageProviders = options.VirtualStorageProviders;
+            _virtualStorageProviders = new ReadOnlyDictionary<string, IVirtualStorageProvider>( options.VirtualStorageProviders );
             IgnoreCase = options.IgnoreCase;
             _leaveProviderOpen = options.LeaveProviderOpen;
         }
@@ -43,8 +44,19 @@ namespace PortableStorage
             _provider = provider ?? throw new ArgumentNullException("provider");
             _leaveProviderOpen = leaveProviderOpen;
             Parent = parent ?? throw new ArgumentNullException("parent");
+            _virtualStorageProviders = parent.VirtualStorageProviders;
             IgnoreCase = parent.IgnoreCase;
-            VirtualStorageProviders = parent.VirtualStorageProviders;
+        }
+
+        private IReadOnlyDictionary<string, IVirtualStorageProvider> _virtualStorageProviders;
+        public IReadOnlyDictionary<string, IVirtualStorageProvider> VirtualStorageProviders
+        {
+            get { return _virtualStorageProviders; }
+            set
+            {
+                _virtualStorageProviders = value;
+                ClearCache(true);
+            }
         }
 
         public string Path => (Parent == null) ? SeparatorChar.ToString() : PathCombine(Parent.Path, Name);

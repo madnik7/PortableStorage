@@ -1,6 +1,7 @@
 ﻿using PortableStorage.Providers;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace PortableStorage
 {
@@ -8,10 +9,13 @@ namespace PortableStorage
     {
         public StorageOptions()
         {
-            VirtualStorageProviders.Add(".zip", new ZipVirualStorageProvider());
+            VirtualStorageProviders = new Dictionary<string, IVirtualStorageProvider>(StringComparer.InvariantCultureIgnoreCase)
+            {
+                { ".zip", new ZipVirualStorageProvider() }
+            };
         }
 
-        public IDictionary<string, IVirtualStorageProvider> VirtualStorageProviders { get; } = new Dictionary<string, IVirtualStorageProvider>(StringComparer.InvariantCultureIgnoreCase);
+        public IDictionary<string, IVirtualStorageProvider> VirtualStorageProviders { get; set; }
         public int CacheTimeout { get; set; } = -1;
         public bool IgnoreCase { get; set; } = true;
         public bool LeaveProviderOpen { get; set; } = false;
