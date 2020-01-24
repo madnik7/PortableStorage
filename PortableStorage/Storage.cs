@@ -14,12 +14,13 @@ namespace PortableStorage
     public class Storage
     {
         public static readonly char SeparatorChar = '/';
-        public int CacheTimeout => Parent?.CacheTimeout ?? _cacheTimeoutFiled;
+        public int CacheTimeout => RootStorage._cacheTimeoutFiled;
         public Storage Parent { get; }
-        
-        public bool IgnoreCase { get; }
+
+        public bool IgnoreCase => RootStorage._ignoreCase;
         public Type ProviderType => _provider.GetType();
 
+        private readonly bool _ignoreCase;
         private readonly IStorageProvider _provider;
         private readonly bool _leaveProviderOpen;
         private readonly int _cacheTimeoutFiled;
@@ -35,33 +36,31 @@ namespace PortableStorage
             _provider = provider ?? throw new ArgumentNullException("provider");
             _cacheTimeoutFiled = options.CacheTimeout == -1 ? 1000 : options.CacheTimeout;
             _virtualStorageProviders = new ReadOnlyDictionary<string, IVirtualStorageProvider>( options.VirtualStorageProviders );
-            IgnoreCase = options.IgnoreCase;
+            _ignoreCase = options.IgnoreCase;
             _leaveProviderOpen = options.LeaveProviderOpen;
         }
 
         private Storage(IStorageProvider provider, Storage parent, bool leaveProviderOpen)
         {
             _provider = provider ?? throw new ArgumentNullException("provider");
-            _leaveProviderOpen = leaveProviderOpen;
             Parent = parent ?? throw new ArgumentNullException("parent");
-            _virtualStorageProviders = parent.VirtualStorageProviders;
-            IgnoreCase = parent.IgnoreCase;
+            _leaveProviderOpen = leaveProviderOpen;
         }
 
         private IReadOnlyDictionary<string, IVirtualStorageProvider> _virtualStorageProviders;
         public IReadOnlyDictionary<string, IVirtualStorageProvider> VirtualStorageProviders
         {
-            get { return _virtualStorageProviders; }
+            get => RootStorage._virtualStorageProviders; 
             set
             {
-                _virtualStorageProviders = value;
+                RootStorage._virtualStorageProviders = value;
                 ClearCache(true);
             }
         }
 
         public string Path => (Parent == null) ? SeparatorChar.ToString() : PathCombine(Parent.Path, Name);
         public bool IsRoot => Parent == null;
-        public Storage RootStorage => Parent?.RootStorage ?? this;
+        public StorageRoot RootStorage => Parent?.RootStorage ?? (StorageRoot)this;
 
         public string Name
         {
