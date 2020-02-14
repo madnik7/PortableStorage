@@ -201,6 +201,11 @@ namespace PortableStorage
             return entries;
         }
 
+        /// <summary>
+        /// return null for root storage
+        /// </summary>
+        public StorageEntry Entry => Parent?.GetEntry(Name);
+
         public void ClearCache(bool recursive = false)
         {
             lock (_lockObject)
