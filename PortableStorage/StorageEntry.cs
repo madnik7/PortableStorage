@@ -1,4 +1,7 @@
-﻿namespace PortableStorage
+﻿using System.IO;
+using System.Text;
+
+namespace PortableStorage
 {
     public class StorageEntry : StorageEntryBase
     {
@@ -21,6 +24,23 @@
                     return false;
                 }
             }
+        }
+
+        public Storage OpenStorage() => Parent.OpenStorage(Name);
+        public Stream OpenStreamRead() => Parent.OpenStreamRead(Name);
+        public Stream OpenStreamWrite(bool truncate) => Parent.OpenStreamWrite(Name, truncate);
+        public byte[] ReadAllBytes() => Parent.ReadAllBytes(Name);
+        public string ReadAllText() => Parent.ReadAllText(Name);
+        public string ReadAllText(Encoding encoding) => Parent.ReadAllText(Name, encoding);
+        public void WriteAllText(string text) => Parent.WriteAllText(Name, text);
+        public void WriteAllText(string text, Encoding encoding) => Parent.WriteAllText(Name, text, encoding);
+
+        public void Delete()
+        {
+            if (IsStream)
+                Parent.DeleteStream(Name);
+            else
+                Parent.DeleteStorage(Name);
         }
     }
 }

@@ -130,7 +130,7 @@ namespace PortableStorage.Test
             stream.Dispose();
 
             Assert.IsTrue(storage.StreamExists("folder1/test.zip"));
-            storage.RemoveStream("folder1/test.zip");
+            storage.DeleteStream("folder1/test.zip");
         }
 
         [TestMethod]
@@ -148,7 +148,7 @@ namespace PortableStorage.Test
             storage.Rename("folder1/test.zip", "test2.zip");
 
             var stream2 = storage.OpenStreamRead("folder1/test2.zip/folder1/folder2/file3.txt");
-            storage.RemoveStorage("folder1");
+            storage.DeleteStorage("folder1");
         }
 
 

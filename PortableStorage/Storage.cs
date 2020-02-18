@@ -333,12 +333,12 @@ namespace PortableStorage
         }
 
 
-        public void RemoveStream(string path)
+        public void DeleteStream(string path)
         {
             Delete(path, false);
         }
 
-        public void RemoveStorage(string path)
+        public void DeleteStorage(string path)
         {
             Delete(path, true);
         }
@@ -521,7 +521,7 @@ namespace PortableStorage
             if (EntryExists(name))
             {
                 if (overwriteExisting)
-                    RemoveStream(name); //try to delete the old one
+                    DeleteStream(name); //try to delete the old one
                 else
                     throw new IOException("Entry already exists!");
             }
@@ -660,6 +660,13 @@ namespace PortableStorage
                     _provider.Dispose();
                 _disposedValue = true;
             }
+        }
+
+        public void Delete()
+        {
+            if (IsRoot)
+                throw new InvalidOperationException("Can not delete the root sorage");
+            Parent.DeleteStorage(Name);
         }
 
         private StorageEntry[] StorageEntryFromStorageEntryProvider(StorageEntryBase[] storageProviderEntry)

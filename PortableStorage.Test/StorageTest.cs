@@ -61,7 +61,7 @@ namespace PortableStorage.Test
             Assert.IsTrue(rootStorage.EntryExists("foo3/foo4/filename1.txt"));
             Assert.IsTrue(storage.EntryExists("foo4/filename1.txt"));
 
-            storage.RemoveStream("foo4/filename1.txt");
+            storage.DeleteStream("foo4/filename1.txt");
             Assert.IsFalse(rootStorage.EntryExists("foo3/foo4/filename1.txt"));
             Assert.IsFalse(storage.EntryExists("foo4/filename1.txt"));
         }
