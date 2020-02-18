@@ -145,8 +145,11 @@ namespace PortableStorage
             return GetEntries(searchPattern).Where(x => !x.IsStorage).ToArray();
         }
 
+        public StorageEntry[] Entries => GetEntries(null);
+
+
         /// <param name="searchPattern">can include path and wildcard. eg: /folder/file.*</param>
-        public StorageEntry[] GetEntries(string searchPattern = null)
+        public StorageEntry[] GetEntries(string searchPattern)
         {
             // manage path
             if (!string.IsNullOrEmpty(searchPattern))
@@ -598,8 +601,7 @@ namespace PortableStorage
 
         public long GetSize()
         {
-            var entries = GetEntries();
-            var ret = entries.Sum(x => x.IsStorage ? OpenStorage(x.Name).GetSize() : x.Size);
+            var ret = Entries.Sum(x => x.IsStorage ? OpenStorage(x.Name).GetSize() : x.Size);
             return ret;
         }
 
@@ -608,7 +610,7 @@ namespace PortableStorage
         public void CopyTo(Storage destinationStorage, string destinationPath, bool overwrite = false) => CopyTo(destinationStorage.CreateStorage(destinationPath), overwrite);
         public void CopyTo(Storage destinationStorage, bool overwrite = false)
         {
-            foreach (var item in GetEntries())
+            foreach (var item in Entries)
                 Copy(item.Name, destinationStorage, "", overwrite);
         }
 
