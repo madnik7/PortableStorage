@@ -29,6 +29,8 @@ namespace PortableStorage
         private readonly ConcurrentDictionary<string, StorageEntry> _entryCache = new ConcurrentDictionary<string, StorageEntry>();
         private readonly object _lockObject = new object();
         private string _name;
+        private readonly bool _isVirtual;
+        public bool IsVirtual => Parent != null && (Parent.IsVirtual || _isVirtual);
 
         public Storage(IStorageProvider provider, StorageOptions options)
         {
@@ -40,11 +42,12 @@ namespace PortableStorage
             _leaveProviderOpen = options.LeaveProviderOpen;
         }
 
-        private Storage(IStorageProvider provider, Storage parent, bool leaveProviderOpen)
+        private Storage(IStorageProvider provider, Storage parent, bool leaveProviderOpen, bool isVirtual)
         {
             _provider = provider ?? throw new ArgumentNullException("provider");
             Parent = parent ?? throw new ArgumentNullException("parent");
             _leaveProviderOpen = leaveProviderOpen;
+            _isVirtual = isVirtual;
         }
 
         private IReadOnlyDictionary<string, IVirtualStorageProvider> _virtualStorageProviders;
@@ -249,12 +252,12 @@ namespace PortableStorage
                     {
                         var stream = OpenStreamRead(name);
                         var storageProvider = virtualStorageProvider.CreateStorageProvider(stream, storageEntry.Uri, name);
-                        newStorage = new Storage(storageProvider, this, false);
+                        newStorage = new Storage(storageProvider, this, false, true);
                     }
                     else
                     {
                         var storageProvider = _provider.OpenStorage(uri);
-                        newStorage = new Storage(storageProvider, this, true);
+                        newStorage = new Storage(storageProvider, this, true, false);
                     }
 
                     StorageCache_Add(name, newStorage);
@@ -290,7 +293,7 @@ namespace PortableStorage
 
             var result = _provider.CreateStorage(name);
             var entry = ProviderEntryToEntry(result.Entry);
-            var newStorage = new Storage(result.Storage, this, true);
+            var newStorage = new Storage(result.Storage, this, true, false);
 
             StorageCache_Add(name, newStorage);
             AddToCache(entry);
@@ -679,10 +682,7 @@ namespace PortableStorage
 
         private StorageEntry ProviderEntryToEntry(StorageEntryBase storageProviderEntry)
         {
-            var isVirtualStorage = false;
-            if (VirtualStorageProviders.TryGetValue(System.IO.Path.GetExtension(storageProviderEntry.Name), out _))
-                isVirtualStorage = true;
-
+            var isVirtualStorage = VirtualStorageProviders.TryGetValue(System.IO.Path.GetExtension(storageProviderEntry.Name), out _) || IsVirtual;
             var entry = new StorageEntry()
             {
                 Attributes = storageProviderEntry.Attributes,

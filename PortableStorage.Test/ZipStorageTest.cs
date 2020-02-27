@@ -54,7 +54,7 @@ namespace PortableStorage.Test
             Assert.IsFalse(zipStorage.StorageExists("folder1/folder2/file3.txt"));
 
             var str = zipStorage.OpenStorage("folder1").OpenStorage("folder2").ReadAllText("file3.txt");
-            Assert.AreEqual(str, "file3.txt contents.", "unexpected text has been readed");
+            Assert.AreEqual("file3.txt contents.", str, "unexpected text has been readed");
         }
 
         private static void AddToZipArchive(ZipArchive zipArchive, string path, string text)
@@ -85,7 +85,7 @@ namespace PortableStorage.Test
             Assert.IsTrue(zipStorage.StreamExists("folder1/folder1/folder1/file2.zip"));
 
             var str = zipStorage.ReadAllText("folder1/folder1/folder1/file2.zip");
-            Assert.AreEqual(str, "z", "unexpected text has been readed");
+            Assert.AreEqual("z", str, "unexpected text has been readed");
         }
 
         [TestMethod]
@@ -98,11 +98,16 @@ namespace PortableStorage.Test
             using (var zipStreamDest = folder1.CreateStream("test.zip"))
                 zipStreamSrc.CopyTo(zipStreamDest);
 
-            Assert.IsTrue(storage.StorageExists("folder1/test.zip"));
             Assert.IsTrue(storage.StreamExists("folder1/test.zip"));
             Assert.IsTrue(storage.StorageExists("folder1/test.zip/folder1"));
             Assert.IsTrue(storage.StreamExists("folder1/test.zip/folder1/file2.txt"));
-            Assert.AreEqual(storage.ReadAllText("folder1/test.zip/folder1/folder2/file3.txt"), "file3.txt contents.", "unexpected text has been readed");
+            Assert.AreEqual("file3.txt contents.", storage.ReadAllText("folder1/test.zip/folder1/folder2/file3.txt"), "unexpected text has been readed");
+            
+            // check IsVirtual
+            Assert.IsFalse(storage.OpenStorage("folder1").IsVirtual);
+            Assert.IsTrue(storage.OpenStorage("folder1/test.zip").IsVirtual);
+            Assert.IsTrue(storage.OpenStorage("folder1/test.zip/folder1").IsVirtual);
+            Assert.IsTrue(storage.OpenStorage("folder1/test.zip/folder1/folder2").IsVirtual);
         }
 
         [TestMethod]
@@ -111,7 +116,7 @@ namespace PortableStorage.Test
             using var zipStream = new MemoryStream(Resource.TestZip);
             using var zipStorage = ZipStorgeProvider.CreateStorage(zipStream);
             var text = zipStorage.ReadAllText("Folder1/File1.txt");
-            Assert.AreEqual(text, "File1 Text.", "The sample file content couldn't be readed properly!");
+            Assert.AreEqual("File1 Text.", text, "The sample file content couldn't be readed properly!");
             Assert.IsTrue(zipStorage.StreamExists("Root.txt"));
             Assert.IsTrue(zipStorage.StorageExists("Folder1"));
         }
