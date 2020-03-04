@@ -121,7 +121,8 @@ namespace PortableStorage
             var entry = GetStreamEntry(name);
             try
             {
-                var ret = _provider.OpenStream(entry.Uri, mode, access, share, bufferSize);
+                var result = _provider.OpenStream(entry.Uri, mode, access, share, bufferSize);
+                var ret = new StreamController(result, entry);
                 return ret;
             }
             catch (StorageNotFoundException)
@@ -533,7 +534,9 @@ namespace PortableStorage
             var result = _provider.CreateStream(name, StreamAccess.Write, share, bufferSize);
             var entry = ProviderEntryToEntry(result.EntryBase);
             AddToCache(entry);
-            return result.Stream;
+
+            var ret = new StreamController(result.Stream, entry);
+            return ret;
         }
 
         public Storage OpenStorage(string path, bool createIfNotExists)

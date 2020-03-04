@@ -2,6 +2,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PortableStorage.Providers;
 using System;
 using System.IO;
+using System.Threading;
 
 namespace PortableStorage.Test
 {
@@ -134,6 +135,22 @@ namespace PortableStorage.Test
                 Assert.AreEqual(ex.ParamName, "path");
             }
 
+        }
+
+        [TestMethod]
+        public void EntrySizeAndWriteTime_Updates_ByStream()
+        {
+            using var rootStorage = GetTempStorage();
+            var stream = rootStorage.CreateStream("aaa");
+            var entry = rootStorage.GetStreamEntry("aaa");
+            var lastWriteTime = entry.LastWriteTime;
+            Assert.AreEqual(0, entry.Size);
+            
+            var buf = new byte[] { 1, 2, 3, 4, 5 };
+            Thread.Sleep(1000);
+            stream.Write(buf, 0, buf.Length);
+            Assert.AreEqual(5, entry.Size);
+            Assert.AreNotEqual(lastWriteTime, entry.LastWriteTime);
         }
 
 
