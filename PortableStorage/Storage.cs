@@ -57,7 +57,7 @@ namespace PortableStorage
             set
             {
                 RootStorage._virtualStorageProviders = value;
-                ClearCache(true);
+                ClearCache();
             }
         }
 
@@ -127,7 +127,7 @@ namespace PortableStorage
             }
             catch (StorageNotFoundException)
             {
-                ClearCache();
+                ClearCache(false);
                 throw;
             }
         }
@@ -213,7 +213,7 @@ namespace PortableStorage
         /// </summary>
         public StorageEntry Entry => Parent?.GetEntry(Name);
 
-        public void ClearCache(bool recursive = false)
+        public void ClearCache(bool recursive = true)
         {
             lock (_lockObject)
             {
@@ -266,7 +266,7 @@ namespace PortableStorage
                 }
                 catch (StorageNotFoundException)
                 {
-                    ClearCache();
+                    ClearCache(false);
                     throw;
                 }
             }
