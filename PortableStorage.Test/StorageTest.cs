@@ -1,4 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using PortableStorage.Exceptions;
 using PortableStorage.Providers;
 using System;
 using System.IO;
@@ -138,6 +139,31 @@ namespace PortableStorage.Test
         }
 
         [TestMethod]
+        public void Storage_ClearCashe()
+        {
+            using var rootStorage = GetTempStorage();
+            rootStorage.CreateStorage("a/b/c");
+            Assert.IsTrue(rootStorage.EntryExists("a/b/c"));
+
+            // perform unmanage delete
+            Directory.Delete(rootStorage.Uri.LocalPath + @"a\b\c");
+
+            rootStorage.ClearCache();
+
+            // check StorageNotFoundException for OpenStorage
+            try
+            {
+                var storage = rootStorage.OpenStorage("a/b/c", false);
+                Assert.Fail("StorageNotFoundException exception expected!");
+            }
+            catch(StorageNotFoundException)
+            { 
+            }
+
+            Assert.IsFalse(rootStorage.EntryExists("a/b/c"), "entry should not exists");
+        }
+
+        [TestMethod]
         public void EntrySizeAndWriteTime_Updates_ByStream()
         {
             using var rootStorage = GetTempStorage();
@@ -145,7 +171,7 @@ namespace PortableStorage.Test
             var entry = rootStorage.GetStreamEntry("aaa");
             var lastWriteTime = entry.LastWriteTime;
             Assert.AreEqual(0, entry.Size);
-            
+
             var buf = new byte[] { 1, 2, 3, 4, 5 };
             Thread.Sleep(1000);
             stream.Write(buf, 0, buf.Length);

@@ -223,6 +223,7 @@ namespace PortableStorage
                         item.Value.ClearCache(recursive);
                 }
 
+                _storageCache.Clear();
                 _entryCache.Clear();
                 _lastCacheTime = DateTime.MinValue;
             }
