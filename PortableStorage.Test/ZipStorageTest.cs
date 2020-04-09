@@ -111,6 +111,26 @@ namespace PortableStorage.Test
         }
 
         [TestMethod]
+        public void Map_virtualStorage__after_Rename()
+        {
+            using var storage = GetTempStorage();
+            var folder1 = storage.CreateStorage("folder1");
+
+            using (var zipStreamSrc = GetTempZipStream())
+            using (var zipStreamDest = folder1.CreateStream("test.zz"))
+                zipStreamSrc.CopyTo(zipStreamDest);
+
+            Assert.IsFalse(storage.GetEntry("folder1/test.zz").IsVirtualStorage);
+            Assert.IsFalse(storage.GetEntry("folder1/test.zz").IsStorage);
+
+            //rename to zip
+            storage.Rename("folder1/test.zz", "test.zip");
+            Assert.IsTrue(storage.GetEntry("folder1/test.zip").IsVirtualStorage, "Virtual Storage doesn't map!");
+            Assert.IsTrue(storage.GetEntry("folder1/test.zip").IsStorage, "Virtual Storage doesn't map!");
+        }
+
+
+        [TestMethod]
         public void Open_zip_storage_by_resource()
         {
             using var zipStream = new MemoryStream(Resource.TestZip);

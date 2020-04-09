@@ -392,12 +392,16 @@ namespace PortableStorage
             // update the cache
             lock (_lockObject)
             {
+                var isVirtualStorage = VirtualStorageProviders.TryGetValue(System.IO.Path.GetExtension(desName), out _) || IsVirtual;
+
                 var newUri = _provider.Rename(entry.Uri, desName);
                 if (_entryCache.TryRemove(name, out StorageEntry storageEntry))
                 {
                     entry.Name = desName;
                     entry.Uri = newUri;
                     entry.Path = PathCombine(Path, desName);
+                    entry.IsStorage = entry.IsStorage || isVirtualStorage;
+                    entry.IsVirtualStorage = isVirtualStorage;
                     AddToCache(entry);
                 }
             }
@@ -665,6 +669,8 @@ namespace PortableStorage
                 //close provider
                 if (!_leaveProviderOpen)
                     _provider.Dispose();
+
+                ClearCache();
                 _disposedValue = true;
             }
         }
