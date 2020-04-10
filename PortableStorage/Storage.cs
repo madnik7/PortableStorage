@@ -211,7 +211,21 @@ namespace PortableStorage
         /// <summary>
         /// return null for root storage
         /// </summary>
-        public StorageEntry Entry => Parent?.GetEntry(Name);
+        public StorageEntry Entry => IsRoot ? RootEntry : Parent.GetEntry(Name);
+
+        private StorageEntry RootEntry => new StorageEntry()
+        {
+            IsStorage = true,
+            IsVirtualStorage = RootStorage.IsVirtual,
+            IsStream = false,
+            LastWriteTime = null,
+            Uri = RootStorage.Uri,
+            Name = "",
+            Size = 0,
+            Root = RootStorage,
+            Parent = null,
+            Path = RootStorage.Path
+        };
 
         public void ClearCache(bool recursive = true)
         {

@@ -93,6 +93,17 @@ namespace PortableStorage.Test
         }
 
         [TestMethod]
+        public void Entry_of_root()
+        {
+            using var rootStorage = GetTempStorage(new StorageOptions() { IgnoreCase = false });
+            Assert.AreEqual(Storage.SeparatorChar.ToString(), rootStorage.Path);
+            Assert.AreEqual(rootStorage, rootStorage.Entry.OpenStorage());
+            Assert.AreEqual(rootStorage.Path, rootStorage.Entry.Path);
+            Assert.AreEqual(rootStorage.Uri, rootStorage.Entry.Uri);
+            Assert.AreEqual(true, rootStorage.Entry.IsStorage);
+        }
+
+        [TestMethod]
         public void Case_sensitive()
         {
             using (var rootStorage = GetTempStorage(new StorageOptions() { IgnoreCase = false }))
