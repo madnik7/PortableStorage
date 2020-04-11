@@ -190,6 +190,21 @@ namespace PortableStorage.Test
             Assert.AreNotEqual(lastWriteTime, entry.LastWriteTime);
         }
 
+        [TestMethod]
+        public void Storage_GetEntry_must_have_entry_name ()
+        {
+            using var storage = GetTempStorage();
+            storage.WriteAllText("/aa/b1.txt", "123");
+            storage.WriteAllText("/aa/b2.txt", "123");
+            storage.WriteAllText("/aa/b3.txt", "123");
+
+            try
+            {
+                var entry = storage.GetEntry("/aa/");
+                Assert.Fail("ArgumentException exception was expected!");
+            }
+            catch (ArgumentException){}
+        }
 
         [TestMethod]
         public void CopyTo()

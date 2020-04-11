@@ -164,7 +164,6 @@ namespace PortableStorage
                 searchPattern = newSearchPattern;
             }
 
-
             //check is cache available
             lock (_lockObject)
             {
@@ -483,6 +482,15 @@ namespace PortableStorage
 
         private StorageEntry GetEntryHelper(string path, bool includeStorage, bool includeStream)
         {
+            // manage path
+            var storage = GetStorageForPath(path, out string name);
+            if (storage != null)
+                return storage.GetEntryHelper(name, includeStorage, includeStream);
+
+            // throw error for empty path
+            if (string.IsNullOrEmpty(path))
+                throw new ArgumentException("Could not find entry name in the path!", nameof(path));
+
             // manage by name
             var entries = GetEntries(path);
             var item = entries.FirstOrDefault();
