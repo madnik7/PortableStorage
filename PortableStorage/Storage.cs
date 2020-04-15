@@ -666,8 +666,6 @@ namespace PortableStorage
             }
         }
 
-
-
         public static string WildcardToRegex(string pattern)
         {
             return "^" + Regex.Escape(pattern)

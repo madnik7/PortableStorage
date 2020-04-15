@@ -159,7 +159,7 @@ namespace PortableStorage.Test
         }
 
         [TestMethod]
-        public void Deleted_Mapped_VirtualFolder()
+        public void Deleted_and_Rename_Mapped_VirtualFolder()
         {
             using var storage = GetTempStorage();
             var folder1 = storage.CreateStorage("folder1");
