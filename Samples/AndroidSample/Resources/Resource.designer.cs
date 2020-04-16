@@ -72,11 +72,11 @@ namespace AndroidSample
 			global::Xamarin.Essentials.Resource.Drawable.notification_template_icon_low_bg = global::AndroidSample.Resource.Drawable.notification_template_icon_low_bg;
 			global::Xamarin.Essentials.Resource.Drawable.notification_tile_bg = global::AndroidSample.Resource.Drawable.notification_tile_bg;
 			global::Xamarin.Essentials.Resource.Drawable.notify_panel_notification_icon_bg = global::AndroidSample.Resource.Drawable.notify_panel_notification_icon_bg;
+			global::Xamarin.Essentials.Resource.Id.actions = global::AndroidSample.Resource.Id.actions;
 			global::Xamarin.Essentials.Resource.Id.action_container = global::AndroidSample.Resource.Id.action_container;
 			global::Xamarin.Essentials.Resource.Id.action_divider = global::AndroidSample.Resource.Id.action_divider;
 			global::Xamarin.Essentials.Resource.Id.action_image = global::AndroidSample.Resource.Id.action_image;
 			global::Xamarin.Essentials.Resource.Id.action_text = global::AndroidSample.Resource.Id.action_text;
-			global::Xamarin.Essentials.Resource.Id.actions = global::AndroidSample.Resource.Id.actions;
 			global::Xamarin.Essentials.Resource.Id.async = global::AndroidSample.Resource.Id.async;
 			global::Xamarin.Essentials.Resource.Id.blocking = global::AndroidSample.Resource.Id.blocking;
 			global::Xamarin.Essentials.Resource.Id.chronometer = global::AndroidSample.Resource.Id.chronometer;
@@ -113,14 +113,7 @@ namespace AndroidSample
 			global::Xamarin.Essentials.Resource.Style.TextAppearance_Compat_Notification_Title = global::AndroidSample.Resource.Style.TextAppearance_Compat_Notification_Title;
 			global::Xamarin.Essentials.Resource.Style.Widget_Compat_NotificationActionContainer = global::AndroidSample.Resource.Style.Widget_Compat_NotificationActionContainer;
 			global::Xamarin.Essentials.Resource.Style.Widget_Compat_NotificationActionText = global::AndroidSample.Resource.Style.Widget_Compat_NotificationActionText;
-			global::Xamarin.Essentials.Resource.Xml.xamarin_essentials_fileprovider_file_paths = global::AndroidSample.Resource.Xml.xamarin_essentials_fileprovider_file_paths;
 			global::Xamarin.Essentials.Resource.Styleable.FontFamily = global::AndroidSample.Resource.Styleable.FontFamily;
-			global::Xamarin.Essentials.Resource.Styleable.FontFamily_fontProviderAuthority = global::AndroidSample.Resource.Styleable.FontFamily_fontProviderAuthority;
-			global::Xamarin.Essentials.Resource.Styleable.FontFamily_fontProviderCerts = global::AndroidSample.Resource.Styleable.FontFamily_fontProviderCerts;
-			global::Xamarin.Essentials.Resource.Styleable.FontFamily_fontProviderFetchStrategy = global::AndroidSample.Resource.Styleable.FontFamily_fontProviderFetchStrategy;
-			global::Xamarin.Essentials.Resource.Styleable.FontFamily_fontProviderFetchTimeout = global::AndroidSample.Resource.Styleable.FontFamily_fontProviderFetchTimeout;
-			global::Xamarin.Essentials.Resource.Styleable.FontFamily_fontProviderPackage = global::AndroidSample.Resource.Styleable.FontFamily_fontProviderPackage;
-			global::Xamarin.Essentials.Resource.Styleable.FontFamily_fontProviderQuery = global::AndroidSample.Resource.Styleable.FontFamily_fontProviderQuery;
 			global::Xamarin.Essentials.Resource.Styleable.FontFamilyFont = global::AndroidSample.Resource.Styleable.FontFamilyFont;
 			global::Xamarin.Essentials.Resource.Styleable.FontFamilyFont_android_font = global::AndroidSample.Resource.Styleable.FontFamilyFont_android_font;
 			global::Xamarin.Essentials.Resource.Styleable.FontFamilyFont_android_fontStyle = global::AndroidSample.Resource.Styleable.FontFamilyFont_android_fontStyle;
@@ -128,6 +121,13 @@ namespace AndroidSample
 			global::Xamarin.Essentials.Resource.Styleable.FontFamilyFont_font = global::AndroidSample.Resource.Styleable.FontFamilyFont_font;
 			global::Xamarin.Essentials.Resource.Styleable.FontFamilyFont_fontStyle = global::AndroidSample.Resource.Styleable.FontFamilyFont_fontStyle;
 			global::Xamarin.Essentials.Resource.Styleable.FontFamilyFont_fontWeight = global::AndroidSample.Resource.Styleable.FontFamilyFont_fontWeight;
+			global::Xamarin.Essentials.Resource.Styleable.FontFamily_fontProviderAuthority = global::AndroidSample.Resource.Styleable.FontFamily_fontProviderAuthority;
+			global::Xamarin.Essentials.Resource.Styleable.FontFamily_fontProviderCerts = global::AndroidSample.Resource.Styleable.FontFamily_fontProviderCerts;
+			global::Xamarin.Essentials.Resource.Styleable.FontFamily_fontProviderFetchStrategy = global::AndroidSample.Resource.Styleable.FontFamily_fontProviderFetchStrategy;
+			global::Xamarin.Essentials.Resource.Styleable.FontFamily_fontProviderFetchTimeout = global::AndroidSample.Resource.Styleable.FontFamily_fontProviderFetchTimeout;
+			global::Xamarin.Essentials.Resource.Styleable.FontFamily_fontProviderPackage = global::AndroidSample.Resource.Styleable.FontFamily_fontProviderPackage;
+			global::Xamarin.Essentials.Resource.Styleable.FontFamily_fontProviderQuery = global::AndroidSample.Resource.Styleable.FontFamily_fontProviderQuery;
+			global::Xamarin.Essentials.Resource.Xml.xamarin_essentials_fileprovider_file_paths = global::AndroidSample.Resource.Xml.xamarin_essentials_fileprovider_file_paths;
 		}
 		
 		public partial class Attribute

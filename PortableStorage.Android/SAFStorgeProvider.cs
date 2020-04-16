@@ -242,7 +242,7 @@ namespace PortableStorage.Droid
             return ret;
         }
 
-        public void SetAttributes(Uri uri, StreamAttribute attributes)
+        public void SetAttributes(Uri uri, StreamAttributes attributes)
         {
             throw new NotSupportedException();
         }
@@ -288,8 +288,8 @@ namespace PortableStorage.Droid
                     if (regXpattern != null && !Regex.IsMatch(name, regXpattern))
                         continue;
 
-                    StreamAttribute attribute = 0;
-                    if (!string.IsNullOrEmpty(name) && name[0] == '.') attribute |= StreamAttribute.Hidden;
+                    StreamAttributes attribute = 0;
+                    if (!string.IsNullOrEmpty(name) && name[0] == '.') attribute |= StreamAttributes.Hidden;
 
                     itemProperties.Add(
                         new StorageEntryBase()
