@@ -10,6 +10,18 @@ namespace PortableStorage.Exceptions
         {
             MinSpace = minSpace;
         }
+
+        public StorageNotEnoughSpaceException()
+        {
+        }
+
+        public StorageNotEnoughSpaceException(string message) : base(message)
+        {
+        }
+
+        public StorageNotEnoughSpaceException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
     }
 
 }

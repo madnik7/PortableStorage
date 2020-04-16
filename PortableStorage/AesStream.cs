@@ -16,18 +16,16 @@ namespace PortableStorage
         public AesStream(Stream baseStream, string password, byte[] salt)
         {
             _baseStream = baseStream;
-            using (var key = new PasswordDeriveBytes(password, salt))
+            using var key = new Rfc2898DeriveBytes(password, salt, 1000, HashAlgorithmName.SHA256 );
+            _aes = new AesManaged
             {
-                _aes = new AesManaged
-                {
-                    KeySize = _keySize,
-                    Mode = CipherMode.ECB,
-                    Padding = PaddingMode.None,
-                    IV = new byte[16], //zero buffer is adequate since we have to use new salt for each stream
-                    Key = key.GetBytes(_keySize / 8)
-                };
-                _encryptor = _aes.CreateEncryptor(_aes.Key, _aes.IV);
-            }
+                KeySize = _keySize,
+                Mode = CipherMode.ECB,
+                Padding = PaddingMode.None,
+                IV = new byte[16], //zero buffer is adequate since we have to use new salt for each stream
+                Key = key.GetBytes(_keySize / 8)
+            };
+            _encryptor = _aes.CreateEncryptor(_aes.Key, _aes.IV);
         }
 
         private void Cipher(byte[] buffer, int offset, int count, long streamPos)
@@ -69,6 +67,8 @@ namespace PortableStorage
 
         public override int Read(byte[] buffer, int offset, int count)
         {
+            if (buffer is null) throw new ArgumentNullException(nameof(buffer));
+
             var streamPos = Position;
             var ret = _baseStream.Read(buffer, offset, count);
             Cipher(buffer, offset, count, streamPos);
@@ -77,6 +77,8 @@ namespace PortableStorage
 
         public override void Write(byte[] buffer, int offset, int count)
         {
+            if (buffer is null) throw new ArgumentNullException(nameof(buffer));
+            
             Cipher(buffer, offset, count, Position);
             _baseStream.Write(buffer, offset, count);
         }

@@ -18,7 +18,7 @@ namespace PortableStorage.Providers
         void RemoveStream(Uri uri);
         void RemoveStorage(Uri uri);
         Uri Rename(Uri uri, string desName);
-        void SetAttributes(Uri uri, StreamAttribute attributes);
+        void SetAttributes(Uri uri, StreamAttributes attributes);
         StorageEntryBase[] GetEntries(string searchPattern = null);
     }
 }

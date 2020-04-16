@@ -13,7 +13,7 @@ namespace PortableStorage
         public Storage Parent { get; internal set; }
         public string Path { get; internal set; }
         public bool IsStream { get; internal set; }
-        public bool IsHidden => Attributes.HasFlag(StreamAttribute.Hidden) || (!string.IsNullOrEmpty(Name) && Name[0] == '.');
+        public bool IsHidden => Attributes.HasFlag(StreamAttributes.Hidden) || (!string.IsNullOrEmpty(Name) && Name[0] == '.');
         public bool Exists => Root != null || Parent.TryGetEntry(Name, out StorageEntry entry) && entry.IsStorage == IsStorage;
         public Storage OpenStorage() => Root ?? Parent.OpenStorage(Name);
         public Stream OpenStreamRead() => StreamParent.OpenStreamRead(Name);

@@ -14,6 +14,18 @@ namespace PortableStorage.Exceptions
             : base($"Storage Entry not found! Uri: {uri}")
         {
         }
+
+        public StorageNotFoundException()
+        {
+        }
+
+        public StorageNotFoundException(string message) : base(message)
+        {
+        }
+
+        public StorageNotFoundException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
     }
 
 }

@@ -14,6 +14,7 @@ namespace PortableStorage.Providers
         public bool IsGetEntriesBySearchPatternFast => false;
         public bool IsGetEntryUriByNameFast => true;
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "<Pending>")]
         public static StorageRoot CreateStorage(string zipPath, StorageOptions storageOptions = null)
         {
             var provider = new ZipStorgeProvider(zipPath);
@@ -21,6 +22,7 @@ namespace PortableStorage.Providers
             return ret;
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "<Pending>")]
         public static StorageRoot CreateStorage(Stream stream, Uri streamUri = null, string streamName = null, StorageOptions storageOptions = null)
         {
             var provider = new ZipStorgeProvider(stream, streamUri, streamName);
@@ -65,23 +67,26 @@ namespace PortableStorage.Providers
         public Uri Rename(Uri uri, string desName) => throw new NotSupportedException();
         public void RemoveStream(Uri uri) => throw new NotSupportedException();
         public void RemoveStorage(Uri uri) => throw new NotSupportedException();
-        public void SetAttributes(Uri uri, StreamAttribute attributes) => throw new NotSupportedException();
+        public void SetAttributes(Uri uri, StreamAttributes attributes) => throw new NotSupportedException();
 
-        public StreamAttribute GetAttributes(Uri uri)
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "<Pending>")]
+        public StreamAttributes GetAttributes(Uri uri)
         {
             if (uri == null)
                 throw new ArgumentNullException(nameof(uri));
 
-            StreamAttribute attr = 0;
+            StreamAttributes attr = 0;
             return attr;
         }
 
         public IStorageProvider OpenStorage(Uri uri)
         {
+            if (uri == null) throw new ArgumentNullException(nameof(uri));
+
             lock (_zipArchive)
             {
                 var path = PathFromUri(uri);
-                var exists = _zipArchive.Entries.Any(x => GetEntryFolderName(x.FullName).IndexOf(path) == 0);
+                var exists = _zipArchive.Entries.Any(x => GetEntryFolderName(x.FullName).IndexOf(path, StringComparison.InvariantCultureIgnoreCase) == 0);
                 if (!exists)
                     throw new StorageNotFoundException(uri);
 
@@ -90,12 +95,12 @@ namespace PortableStorage.Providers
             }
         }
 
-        private string GetEntryFolderName(string fullName)
+        private static string GetEntryFolderName(string fullName)
         {
             return GetEntryFolderName(fullName, out _);
         }
 
-        private string GetEntryFolderName(string fullName, out string fixFullName)
+        private static string GetEntryFolderName(string fullName, out string fixFullName)
         {
             //fix and add first separator to  fullname
             fullName = fullName.Replace('\\', Storage.SeparatorChar);
@@ -117,7 +122,7 @@ namespace PortableStorage.Providers
                 foreach (var entry in _zipArchive.Entries)
                 {
                     var entryFolder = GetEntryFolderName(entry.FullName, out string fullName);
-                    if (entryFolder.IndexOf(_path) != 0)
+                    if (entryFolder.IndexOf(_path, StringComparison.InvariantCultureIgnoreCase) != 0)
                         continue; //not exists in current folder
 
                     // find item part
@@ -127,14 +132,14 @@ namespace PortableStorage.Providers
                         continue; //no item part means it posint to current storage
 
                     // add file in current path
-                    if (entryFolder == _path && entry.Name != "") // if entry.Name is empty it means it is empty folder not a file
+                    if (entryFolder == _path && !string.IsNullOrEmpty(entry.Name)) // if entry.Name is empty it means it is empty folder not a file
                     {
                         ret.Add(StorageProviderEntryFromZipEntry(entry));
                     }
                     // add folder in current path 
                     else
                     {
-                        var nextSeparatorIndex = itemPart.IndexOf(Storage.SeparatorChar);
+                        var nextSeparatorIndex = itemPart.IndexOf(Storage.SeparatorChar, StringComparison.InvariantCultureIgnoreCase);
                         if (nextSeparatorIndex == -1) nextSeparatorIndex = itemPart.Length;
                         var folderName = itemPart.Substring(0, nextSeparatorIndex);
                         if (!folders.TryGetValue(folderName, out ZipArchiveEntry lastEntry) || lastEntry.LastWriteTime < entry.LastWriteTime)
@@ -162,6 +167,8 @@ namespace PortableStorage.Providers
 
         public Stream OpenStream(Uri uri, StreamMode mode, StreamAccess access, StreamShare share, int bufferSize)
         {
+            if (uri is null) throw new ArgumentNullException(nameof(uri));
+
             if (mode != StreamMode.Open)
                 throw new NotSupportedException($"ZipStorgeProvider does not support mode: {mode}");
 
@@ -191,7 +198,7 @@ namespace PortableStorage.Providers
 
         private StorageEntryBase StorageProviderEntryFromZipEntry(ZipArchiveEntry entry)
         {
-            StreamAttribute attr = 0;
+            StreamAttributes attr = 0;
             var ret = new StorageEntryBase()
             {
                 Uri = PathToUri(entry.FullName),
@@ -205,9 +212,27 @@ namespace PortableStorage.Providers
             return ret;
         }
 
+        private bool _disposedValue = false; // To detect redundant calls
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposedValue)
+                return;
+
+            if (disposing)
+            {
+                // dispose managed state (managed objects).
+                _zipArchive.Dispose();
+            }
+
+            // free unmanaged resources (unmanaged objects) and override a finalizer below.
+            // set large fields to null.
+
+            _disposedValue = true;
+        }
+
         public void Dispose()
         {
-            _zipArchive.Dispose();
+            Dispose(true);
         }
     }
 }

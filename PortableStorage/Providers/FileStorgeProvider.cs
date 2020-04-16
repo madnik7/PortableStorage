@@ -12,6 +12,7 @@ namespace PortableStorage.Providers
         public bool IsGetEntriesBySearchPatternFast => true;
         public bool IsGetEntryUriByNameFast => true;
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "<Pending>")]
         public static StorageRoot CreateStorage(string path, bool createIfNotExists, StorageOptions storageOptions = null)
         {
             var provider = new FileStorgeProvider(path, createIfNotExists);
@@ -76,7 +77,7 @@ namespace PortableStorage.Providers
             return ret;
         }
 
-        StorageEntryBase[] IStorageProvider.GetEntries(string searchPattern)
+        public StorageEntryBase[] GetEntries(string searchPattern)
         {
             var fsEntries = string.IsNullOrEmpty(searchPattern) ? Directory.GetFileSystemEntries(SystemPath) : Directory.GetFileSystemEntries(SystemPath, searchPattern);
 
@@ -151,30 +152,32 @@ namespace PortableStorage.Providers
             Directory.Delete(folderPath, true);
         }
 
-        public void SetAttributes(Uri uri, StreamAttribute attributes)
+        public void SetAttributes(Uri uri, StreamAttributes attributes)
         {
             FileAttributes fattr = 0;
             var filePath = PathFromUri(uri);
-            if (attributes.HasFlag(StreamAttribute.Hidden)) fattr |= FileAttributes.Hidden;
-            if (attributes.HasFlag(StreamAttribute.System)) fattr |= FileAttributes.System;
+            if (attributes.HasFlag(StreamAttributes.Hidden)) fattr |= FileAttributes.Hidden;
+            if (attributes.HasFlag(StreamAttributes.System)) fattr |= FileAttributes.System;
             File.SetAttributes(filePath, fattr);
         }
 
 
-        public StreamAttribute GetAttributes(Uri uri)
+        public StreamAttributes GetAttributes(Uri uri)
         {
-            StreamAttribute attr = 0;
+            StreamAttributes attr = 0;
 
             var filePath = PathFromUri(uri);
             var fileAttr = File.GetAttributes(filePath);
-            if (fileAttr.HasFlag(FileAttributes.Hidden)) attr |= StreamAttribute.Hidden;
-            if (fileAttr.HasFlag(FileAttributes.System)) attr |= StreamAttribute.System;
+            if (fileAttr.HasFlag(FileAttributes.Hidden)) attr |= StreamAttributes.Hidden;
+            if (fileAttr.HasFlag(FileAttributes.System)) attr |= StreamAttributes.System;
 
             return attr;
         }
 
         private string PathFromUri(Uri uri)
         {
+            if (uri == null) throw new ArgumentNullException(nameof(uri));
+
             var name = Path.GetFileName(uri.LocalPath);
             return Path.Combine(SystemPath, name);
         }
@@ -191,10 +194,10 @@ namespace PortableStorage.Providers
 
         private static StorageEntryBase StorageProviderEntryFromFileInfo(FileInfo fileInfo)
         {
-            StreamAttribute attr = 0;
+            StreamAttributes attr = 0;
             var fileAttr = fileInfo.Attributes;
-            if (fileAttr.HasFlag(FileAttributes.Hidden)) attr |= StreamAttribute.Hidden;
-            if (fileAttr.HasFlag(FileAttributes.System)) attr |= StreamAttribute.System;
+            if (fileAttr.HasFlag(FileAttributes.Hidden)) attr |= StreamAttributes.Hidden;
+            if (fileAttr.HasFlag(FileAttributes.System)) attr |= StreamAttributes.System;
 
             var ret = new StorageEntryBase()
             {
@@ -209,8 +212,26 @@ namespace PortableStorage.Providers
             return ret;
         }
 
+        private bool _disposedValue = false; // To detect redundant calls
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposedValue)
+                return;
+
+            if (disposing)
+            {
+                // dispose managed state (managed objects).
+            }
+
+            // free unmanaged resources (unmanaged objects) and override a finalizer below.
+            // set large fields to null.
+
+            _disposedValue = true;
+        }
+
         public void Dispose()
         {
+            Dispose(true);
         }
     }
 }

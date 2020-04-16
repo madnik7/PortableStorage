@@ -11,8 +11,8 @@ namespace PortableStorage
 
         public SyncStream(Stream stream, bool keepCurrentPosition = false)
         {
-            _stream = stream ?? throw new ArgumentNullException("stream");
-            _lockObject = _stream;
+            _stream = stream ?? throw new ArgumentNullException(nameof(stream));
+            _lockObject = stream;
             _position = keepCurrentPosition ? _stream.Position : 0;
         }
 
@@ -67,25 +67,13 @@ namespace PortableStorage
         {
             lock (_lockObject)
             {
-                long newPosition;
-                switch (origin)
+                var newPosition = origin switch
                 {
-                    case SeekOrigin.Begin:
-                        newPosition = offset;
-                        break;
-
-                    case SeekOrigin.Current:
-                        newPosition = offset + _position;
-                        break;
-
-                    case SeekOrigin.End:
-                        newPosition = offset + Length;
-                        break;
-
-                    default:
-                        throw new NotSupportedException();
-                }
-
+                    SeekOrigin.Begin => offset,
+                    SeekOrigin.Current => offset + _position,
+                    SeekOrigin.End => offset + Length,
+                    _ => throw new NotSupportedException(),
+                };
                 if (_position == newPosition)
                     return _position;
 

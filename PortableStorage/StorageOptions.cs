@@ -15,7 +15,7 @@ namespace PortableStorage
             };
         }
 
-        public IDictionary<string, IVirtualStorageProvider> VirtualStorageProviders { get; set; }
+        public IDictionary<string, IVirtualStorageProvider> VirtualStorageProviders { get; }
         public int CacheTimeout { get; set; } = -1;
         public bool IgnoreCase { get; set; } = true;
         public bool LeaveProviderOpen { get; set; } = false;

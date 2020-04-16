@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using PortableStorage.Providers;
 using System.Collections.ObjectModel;
+using System.Globalization;
 
 namespace PortableStorage
 {
@@ -34,8 +35,8 @@ namespace PortableStorage
 
         public Storage(IStorageProvider provider, StorageOptions options)
         {
-            options = options ?? new StorageOptions();
-            _provider = provider ?? throw new ArgumentNullException("provider");
+            options ??= new StorageOptions();
+            _provider = provider ?? throw new ArgumentNullException(nameof(provider));
             _cacheTimeoutFiled = options.CacheTimeout == -1 ? 1000 : options.CacheTimeout;
             _virtualStorageProviders = new ReadOnlyDictionary<string, IVirtualStorageProvider>( options.VirtualStorageProviders );
             _ignoreCase = options.IgnoreCase;
@@ -44,8 +45,8 @@ namespace PortableStorage
 
         private Storage(IStorageProvider provider, Storage parent, bool leaveProviderOpen, bool isVirtual)
         {
-            _provider = provider ?? throw new ArgumentNullException("provider");
-            Parent = parent ?? throw new ArgumentNullException("parent");
+            _provider = provider ?? throw new ArgumentNullException(nameof(provider));
+            Parent = parent ?? throw new ArgumentNullException(nameof(parent));
             _leaveProviderOpen = leaveProviderOpen;
             _isVirtual = isVirtual;
         }
@@ -61,7 +62,7 @@ namespace PortableStorage
             }
         }
 
-        public string Path => (Parent == null) ? SeparatorChar.ToString() : PathCombine(Parent.Path, Name);
+        public string Path => (Parent == null) ? SeparatorChar.ToString(CultureInfo.CurrentCulture) : PathCombine(Parent.Path, Name);
         public bool IsRoot => Parent == null;
         public StorageRoot RootStorage => Parent?.RootStorage ?? (StorageRoot)this;
 
@@ -149,6 +150,7 @@ namespace PortableStorage
             return GetEntries(searchPattern).Where(x => !x.IsStorage).ToArray();
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1819:Properties should not return arrays", Justification = "<Pending>")]
         public StorageEntry[] Entries => GetEntries(null);
 
 
@@ -242,6 +244,7 @@ namespace PortableStorage
             }
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "<Pending>")]
         public Storage OpenStorage(string path)
         {
             // manage path
@@ -295,7 +298,7 @@ namespace PortableStorage
 
             // validate name
             if (string.IsNullOrEmpty(path?.Trim()))
-                throw new ArgumentException("invalid path name!", "path");
+                throw new ArgumentException("invalid path name!", nameof(path));
 
             // Check existance, some provider may duplicate the entry with same name
             if (EntryExists(name))
@@ -499,7 +502,7 @@ namespace PortableStorage
             throw new StorageNotFoundException(Uri, path);
         }
 
-        public void SetAttributes(string path, StreamAttribute attributes)
+        public void SetAttributes(string path, StreamAttributes attributes)
         {
             var entry = GetEntry(path);
             try
@@ -512,7 +515,7 @@ namespace PortableStorage
             }
         }
 
-        public StreamAttribute GetAttributes(string path)
+        public StreamAttributes GetAttributes(string path)
         {
             var entry = GetEntry(path);
             var ret = entry.Attributes;
@@ -583,47 +586,45 @@ namespace PortableStorage
 
         public string ReadAllText(string path)
         {
-            using (var stream = OpenStreamRead(path))
-            using (var sr = new StreamReader(stream))
-            {
-                return sr.ReadToEnd();
-            }
+            using var stream = OpenStreamRead(path);
+            using var sr = new StreamReader(stream);
+            return sr.ReadToEnd();
         }
 
         public string ReadAllText(string path, Encoding encoding)
         {
-            using (var stream = OpenStreamRead(path))
-            using (var sr = new StreamReader(stream, encoding))
-            {
-                return sr.ReadToEnd();
-            }
+            using var stream = OpenStreamRead(path);
+            using var sr = new StreamReader(stream, encoding);
+            return sr.ReadToEnd();
         }
 
         public void WriteAllText(string path, string text, Encoding encoding)
         {
-            using (var stream = OpenStreamWrite(path, true))
-            using (var sr = new StreamWriter(stream, encoding))
-                sr.Write(text);
+            using var stream = OpenStreamWrite(path, true);
+            using var sr = new StreamWriter(stream, encoding);
+            sr.Write(text);
         }
 
         public void WriteAllText(string path, string text)
         {
-            using (var stream = OpenStreamWrite(path, true))
-            using (var sr = new StreamWriter(stream))
-                sr.Write(text);
+            using var stream = OpenStreamWrite(path, true);
+            using var sr = new StreamWriter(stream);
+            sr.Write(text);
         }
 
         public byte[] ReadAllBytes(string path)
         {
-            using (var stream = OpenStreamRead(path))
-            using (var sr = new BinaryReader(stream))
-                return sr.ReadBytes((int)stream.Length);
+            using var stream = OpenStreamRead(path);
+            using var sr = new BinaryReader(stream);
+            return sr.ReadBytes((int)stream.Length);
         }
 
         public void WriteAllBytes(string path, byte[] bytes)
         {
-            using (var stream = OpenStreamWrite(path))
-                stream.Write(bytes, 0, bytes.Length);
+            if (bytes is null) throw new ArgumentNullException(nameof(bytes));
+
+            using var stream = OpenStreamWrite(path);
+            stream.Write(bytes, 0, bytes.Length);
         }
 
 
@@ -640,7 +641,14 @@ namespace PortableStorage
 
         public void Copy(string sourcePath, string destinationPath, bool overwrite = false) => Copy(GetEntry(sourcePath), this, destinationPath, overwrite);
         public void Copy(string sourcePath, Storage destinationStorage, string destinationPath, bool overwrite = false) => Copy(GetEntry(sourcePath), destinationStorage, destinationPath, overwrite);
-        public void CopyTo(Storage destinationStorage, string destinationPath, bool overwrite = false) => CopyTo(destinationStorage.CreateStorage(destinationPath), overwrite);
+        
+        public void CopyTo(Storage destinationStorage, string destinationPath, bool overwrite = false)
+        {
+            if (destinationStorage is null) throw new ArgumentNullException(nameof(destinationStorage));
+
+            CopyTo(destinationStorage.CreateStorage(destinationPath), overwrite);
+        }
+
         public void CopyTo(Storage destinationStorage, bool overwrite = false)
         {
             foreach (var item in Entries)
@@ -649,15 +657,18 @@ namespace PortableStorage
 
         public static void Copy(StorageEntry srcEntry, Storage destinationStorage, string destinationPath, bool overwrite = false)
         {
+            if (srcEntry is null) throw new ArgumentNullException(nameof(srcEntry));
+            if (destinationStorage is null) throw new ArgumentNullException(nameof(destinationStorage));
+
             // add source filename to destination path if dest path is a folder (ended with separator)
             if (string.IsNullOrEmpty(System.IO.Path.GetFileName(destinationPath)))
                 destinationPath = PathCombine(destinationPath, System.IO.Path.GetFileName(srcEntry.Name));
 
             if (srcEntry.IsStream)
             {
-                using (var srcStream = srcEntry.Parent.OpenStreamRead(srcEntry.Name))
-                using (var desStream = destinationStorage.CreateStream(destinationPath, overwrite))
-                    srcStream.CopyTo(desStream);
+                using var srcStream = srcEntry.Parent.OpenStreamRead(srcEntry.Name);
+                using var desStream = destinationStorage.CreateStream(destinationPath, overwrite);
+                srcStream.CopyTo(desStream);
             }
             else
             {
@@ -669,8 +680,8 @@ namespace PortableStorage
         public static string WildcardToRegex(string pattern)
         {
             return "^" + Regex.Escape(pattern)
-                              .Replace(@"\*", ".*")
-                              .Replace(@"\?", ".")
+                              .Replace(@"\*", ".*", StringComparison.InvariantCulture)
+                              .Replace(@"\?", ".", StringComparison.InvariantCulture)
                        + "$";
         }
 
@@ -698,7 +709,7 @@ namespace PortableStorage
         public void Delete()
         {
             if (IsRoot)
-                throw new InvalidOperationException("Can not delete the root sorage");
+                throw new InvalidOperationException("Can not delete the root storage!");
             Parent.DeleteStorage(Name);
         }
 
