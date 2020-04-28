@@ -86,7 +86,7 @@ namespace PortableStorage.Providers
             lock (_zipArchive)
             {
                 var path = PathFromUri(uri);
-                var exists = _zipArchive.Entries.Any(x => GetEntryFolderName(x.FullName).IndexOf(path, StringComparison.InvariantCultureIgnoreCase) == 0);
+                var exists = _zipArchive.Entries.Any(x => GetEntryFolderName(x.FullName).IndexOf(path, StringComparison.OrdinalIgnoreCase) == 0);
                 if (!exists)
                     throw new StorageNotFoundException(uri);
 
@@ -122,7 +122,7 @@ namespace PortableStorage.Providers
                 foreach (var entry in _zipArchive.Entries)
                 {
                     var entryFolder = GetEntryFolderName(entry.FullName, out string fullName);
-                    if (entryFolder.IndexOf(_path, StringComparison.InvariantCultureIgnoreCase) != 0)
+                    if (entryFolder.IndexOf(_path, StringComparison.OrdinalIgnoreCase) != 0)
                         continue; //not exists in current folder
 
                     // find item part
@@ -139,7 +139,7 @@ namespace PortableStorage.Providers
                     // add folder in current path 
                     else
                     {
-                        var nextSeparatorIndex = itemPart.IndexOf(Storage.SeparatorChar, StringComparison.InvariantCultureIgnoreCase);
+                        var nextSeparatorIndex = itemPart.IndexOf(Storage.SeparatorChar, StringComparison.OrdinalIgnoreCase);
                         if (nextSeparatorIndex == -1) nextSeparatorIndex = itemPart.Length;
                         var folderName = itemPart.Substring(0, nextSeparatorIndex);
                         if (!folders.TryGetValue(folderName, out ZipArchiveEntry lastEntry) || lastEntry.LastWriteTime < entry.LastWriteTime)

@@ -9,7 +9,7 @@ namespace PortableStorage
     {
         public StorageOptions()
         {
-            VirtualStorageProviders = new Dictionary<string, IVirtualStorageProvider>(StringComparer.InvariantCultureIgnoreCase)
+            VirtualStorageProviders = new Dictionary<string, IVirtualStorageProvider>(StringComparer.OrdinalIgnoreCase)
             {
                 { ".zip", new ZipVirualStorageProvider() }
             };

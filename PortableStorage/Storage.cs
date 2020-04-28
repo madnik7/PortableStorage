@@ -680,8 +680,8 @@ namespace PortableStorage
         public static string WildcardToRegex(string pattern)
         {
             return "^" + Regex.Escape(pattern)
-                              .Replace(@"\*", ".*", StringComparison.InvariantCulture)
-                              .Replace(@"\?", ".", StringComparison.InvariantCulture)
+                              .Replace(@"\*", ".*", StringComparison.OrdinalIgnoreCase)
+                              .Replace(@"\?", ".", StringComparison.OrdinalIgnoreCase)
                        + "$";
         }
 
