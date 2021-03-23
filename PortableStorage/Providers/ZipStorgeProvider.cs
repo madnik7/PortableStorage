@@ -14,7 +14,6 @@ namespace PortableStorage.Providers
         public bool IsGetEntriesBySearchPatternFast => false;
         public bool IsGetEntryUriByNameFast => true;
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "<Pending>")]
         public static StorageRoot CreateStorage(string zipPath, StorageOptions storageOptions = null)
         {
             var provider = new ZipStorgeProvider(zipPath);
@@ -22,7 +21,6 @@ namespace PortableStorage.Providers
             return ret;
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "<Pending>")]
         public static StorageRoot CreateStorage(Stream stream, Uri streamUri = null, string streamName = null, StorageOptions storageOptions = null)
         {
             var provider = new ZipStorgeProvider(stream, streamUri, streamName);
@@ -127,7 +125,7 @@ namespace PortableStorage.Providers
 
                     // find item part
                     // if current folder is "/folder1/sub1/aa.txt" then itemPart is "sub1/aa.txt"
-                    var itemPart = fullName.Substring(_path.Length).Replace('\\', Storage.SeparatorChar);
+                    var itemPart = fullName[_path.Length..].Replace('\\', Storage.SeparatorChar);
                     if (string.IsNullOrEmpty(itemPart))
                         continue; //no item part means it posint to current storage
 

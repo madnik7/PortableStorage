@@ -72,7 +72,7 @@ namespace PortableStorage.Droid
         public CreateStreamResult CreateStream(string name, StreamAccess access, StreamShare share, int bufferSize = 0)
         {
             var resolver = Context.ContentResolver;
-            var androidUri = DocumentsContract.CreateDocument(resolver, AndroidUri, null, name);
+            var androidUri = DocumentsContract.CreateDocument(resolver, AndroidUri, "application/octet-stream", name);
             var fs = OpenStream(androidUri, StreamMode.Open, access, share, bufferSize);
             var ret = new CreateStreamResult()
             {
