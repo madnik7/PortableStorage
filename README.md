@@ -32,13 +32,13 @@ Check Android Sample in the repository!
 
 ```c#
 
-private const int browseRequestCode = 100; //Just a unique number
+private const int BROWSE_REQUEST_CODE = 100; //Just a unique number
 
 
 // Select a folder by Intent 
 private void BrowseOnClick(object sender, EventArgs eventArgs)
 {
-     SafStorageHelper.BrowserFolder(this, browseRequestCode);
+     SafStorageHelper.BrowserFolder(this, BROWSE_REQUEST_CODE);
 }
 
 // Access the folder via SafStorgeProvider
